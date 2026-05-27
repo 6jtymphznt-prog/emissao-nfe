@@ -533,91 +533,159 @@ def diagnostico():
         'msg': f'UF={Config.EMIT_UF} Ambiente={"Homologacao" if Config.NFE_AMBIENTE == "2" else "Producao"}',
     })
 
-    # 4. Testar conexao com a SEFAZ (forcando TLS 1.2)
-    try:
-        import requests as req
-        import ssl
-        import certifi
-        from requests.adapters import HTTPAdapter
-        from urllib3.util.ssl_ import create_urllib3_context
-        from nfe.transmitter import SefazTLSAdapter
-
-        signer = get_signer()
-        cert_pem, key_pem = signer.get_cert_key_temp_files()
-        try:
-            session = req.Session()
-            adapter = SefazTLSAdapter(cert_pem, key_pem)
-            session.mount('https://', adapter)
-            resp = session.get(url_status, timeout=15)
-            resultados.append({
-                'teste': 'Conexao com SEFAZ (TLS 1.2 + certificado)',
-                'detalhe': f'HTTP {resp.status_code}',
-                'ok': True,
-                'msg': f'Conexao estabelecida com sucesso (HTTP {resp.status_code})',
-            })
-        except req.exceptions.SSLError as e:
-            err_str = str(e)
-            resultados.append({
-                'teste': 'Conexao com SEFAZ (TLS 1.2 + certificado)',
-                'detalhe': err_str[:300],
-                'ok': False,
-                'msg': 'Erro SSL/TLS. O certificado pode nao ser aceito pela SEFAZ.',
-            })
-        except req.exceptions.ConnectionError as e:
-            resultados.append({
-                'teste': 'Conexao com SEFAZ (TLS 1.2 + certificado)',
-                'detalhe': str(e)[:300],
-                'ok': False,
-                'msg': 'Conexao recusada pela SEFAZ.',
-            })
-        except req.exceptions.Timeout:
-            resultados.append({
-                'teste': 'Conexao com SEFAZ (TLS 1.2 + certificado)',
-                'detalhe': 'Timeout de 15 segundos',
-                'ok': False,
-                'msg': 'SEFAZ nao respondeu. O servico pode estar fora do ar.',
-            })
-        finally:
-            signer.cleanup_temp_files(cert_pem, key_pem)
-    except Exception as e:
+    # 4. Verificar proxy da rede
+    import os as _os
+    proxy_http = _os.environ.get('HTTP_PROXY', _os.environ.get('http_proxy', ''))
+    proxy_https = _os.environ.get('HTTPS_PROXY', _os.environ.get('https_proxy', ''))
+    if proxy_http or proxy_https:
         resultados.append({
-            'teste': 'Conexao com SEFAZ',
-            'detalhe': str(e)[:300],
-            'ok': False,
-            'msg': str(e)[:200],
+            'teste': 'Proxy detectado',
+            'detalhe': f'HTTP={proxy_http or "nenhum"} HTTPS={proxy_https or "nenhum"}',
+            'ok': True,
+            'msg': 'Proxy configurado no sistema',
         })
 
-    # 5. Testar conexao SEM certificado (para diferenciar problema de rede vs certificado)
+    # 5. Testar conexao SEM certificado
+    import requests as req
     try:
-        import requests as req
         resp = req.get(url_status, timeout=15, verify=True)
         resultados.append({
-            'teste': 'Conexao com SEFAZ (sem certificado)',
+            'teste': 'Rede ate SEFAZ (sem certificado)',
             'detalhe': f'HTTP {resp.status_code}',
             'ok': True,
-            'msg': 'Rede OK. Se o teste anterior falhou, o problema e no certificado.',
+            'msg': 'Rede OK.',
         })
     except req.exceptions.SSLError:
         resultados.append({
-            'teste': 'Conexao com SEFAZ (sem certificado)',
-            'detalhe': 'Esperado - SEFAZ exige certificado',
+            'teste': 'Rede ate SEFAZ (sem certificado)',
+            'detalhe': 'SEFAZ respondeu pedindo certificado (normal)',
             'ok': True,
-            'msg': 'Rede OK (SEFAZ respondeu pedindo certificado, o que e normal).',
+            'msg': 'Rede OK.',
         })
     except req.exceptions.ConnectionError:
         resultados.append({
-            'teste': 'Conexao com SEFAZ (sem certificado)',
+            'teste': 'Rede ate SEFAZ (sem certificado)',
             'detalhe': 'Sem conexao',
             'ok': False,
-            'msg': 'Sem acesso a internet ou SEFAZ fora do ar. Verifique sua conexao.',
+            'msg': 'Sem acesso a internet ou SEFAZ fora do ar.',
         })
     except Exception as e:
         resultados.append({
-            'teste': 'Conexao com SEFAZ (sem certificado)',
+            'teste': 'Rede ate SEFAZ (sem certificado)',
             'detalhe': str(e)[:200],
             'ok': False,
-            'msg': str(e)[:200],
+            'msg': str(e)[:100],
         })
+
+    # 6. Testar download dos intermediarios
+    try:
+        from cryptography.x509.oid import AuthorityInformationAccessOID, ExtensionOID
+        aia = certificate.extensions.get_extension_for_oid(ExtensionOID.AUTHORITY_INFORMATION_ACCESS)
+        ca_urls = [
+            desc.access_location.value
+            for desc in aia.value
+            if desc.access_method == AuthorityInformationAccessOID.CA_ISSUERS
+        ]
+        if ca_urls:
+            try:
+                resp_aia = req.get(ca_urls[0], timeout=10)
+                resp_aia.raise_for_status()
+                resultados.append({
+                    'teste': 'Download certificado intermediario',
+                    'detalhe': f'{ca_urls[0]} => HTTP {resp_aia.status_code} ({len(resp_aia.content)} bytes)',
+                    'ok': True,
+                    'msg': 'Download OK',
+                })
+            except Exception as e:
+                resultados.append({
+                    'teste': 'Download certificado intermediario',
+                    'detalhe': f'URL: {ca_urls[0]} Erro: {str(e)[:200]}',
+                    'ok': False,
+                    'msg': 'Falhou - rede da empresa pode estar bloqueando',
+                })
+        else:
+            resultados.append({
+                'teste': 'Download certificado intermediario',
+                'detalhe': 'Certificado nao possui URL de intermediarios (AIA)',
+                'ok': False,
+                'msg': 'Sem URL de intermediarios',
+            })
+    except Exception as e:
+        resultados.append({
+            'teste': 'Download certificado intermediario',
+            'detalhe': str(e)[:200],
+            'ok': False,
+            'msg': f'Erro ao ler extensao AIA: {str(e)[:100]}',
+        })
+
+    # 7. Testar conexao COM certificado - multiplas abordagens
+    import ssl
+    import certifi
+    from nfe.transmitter import SefazTLSAdapter
+
+    signer = get_signer()
+    cert_pem, key_pem = signer.get_cert_key_temp_files()
+
+    def _test_connection(label, session_factory):
+        try:
+            session = session_factory()
+            resp = session.post(
+                url_status,
+                data=b'<test/>',
+                headers={'Content-Type': 'application/soap+xml; charset=utf-8'},
+                timeout=15,
+            )
+            return True, f'HTTP {resp.status_code}', f'Conexao OK (HTTP {resp.status_code})'
+        except req.exceptions.SSLError as e:
+            err = str(e)
+            if 'CERTIFICATE_REQUIRED' in err or 'certificate required' in err.lower():
+                return False, err[:300], 'SEFAZ recusou o certificado'
+            return False, err[:300], 'Erro SSL/TLS'
+        except req.exceptions.ConnectionError as e:
+            return False, str(e)[:300], 'Conexao recusada'
+        except Exception as e:
+            return False, str(e)[:300], str(e)[:100]
+
+    # Teste A: TLS 1.2 + certificado (padrao)
+    def factory_tls12():
+        s = req.Session()
+        s.mount('https://', SefazTLSAdapter(cert_pem, key_pem))
+        return s
+    ok, det, msg = _test_connection('TLS 1.2', factory_tls12)
+    resultados.append({'teste': 'SEFAZ com cert (TLS 1.2)', 'detalhe': det, 'ok': ok, 'msg': msg})
+
+    # Teste B: TLS 1.2 + cert + sem verificacao do servidor
+    def factory_tls12_noverify():
+        import urllib3
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        s = req.Session()
+        s.verify = False
+        s.mount('https://', SefazTLSAdapter(cert_pem, key_pem))
+        return s
+    ok, det, msg = _test_connection('TLS 1.2 sem verify', factory_tls12_noverify)
+    resultados.append({'teste': 'SEFAZ com cert (TLS 1.2, verify=False)', 'detalhe': det, 'ok': ok, 'msg': msg})
+
+    # Teste C: Sem forcar TLS (deixar Python negociar) + cert
+    def factory_auto_tls():
+        s = req.Session()
+        s.cert = (cert_pem, key_pem)
+        return s
+    ok, det, msg = _test_connection('TLS auto', factory_auto_tls)
+    resultados.append({'teste': 'SEFAZ com cert (TLS automatico)', 'detalhe': det, 'ok': ok, 'msg': msg})
+
+    # Teste D: Sem forcar TLS + cert + sem proxy
+    def factory_noproxy():
+        s = req.Session()
+        s.cert = (cert_pem, key_pem)
+        s.trust_env = False
+        return s
+    ok, det, msg = _test_connection('Sem proxy', factory_noproxy)
+    resultados.append({'teste': 'SEFAZ com cert (sem proxy do sistema)', 'detalhe': det, 'ok': ok, 'msg': msg})
+
+    signer.cleanup_temp_files(cert_pem, key_pem)
+
+    # (fim dos testes, sem o bloco antigo de "sem certificado")
+    dummy_var = None  # placeholder para nao quebrar indentacao
 
     return render_template('diagnostico.html', config=Config, resultados=resultados, cert_info=cert_info)
 
