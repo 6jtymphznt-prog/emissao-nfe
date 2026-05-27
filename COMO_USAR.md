@@ -41,13 +41,47 @@ git clone <URL_DO_REPOSITORIO>
 
 ### 3. Instalar as dependencias
 
-1. Abra o **Prompt de Comando** (Windows) ou **Terminal** (Mac/Linux)
-2. Navegue ate a pasta do projeto:
+1. Abra o **Prompt de Comando**:
+   - No Windows: aperte a tecla **Windows** do teclado, digite **cmd** e
+     aperte Enter
+   - No Mac: abra o aplicativo **Terminal** (esta em Aplicativos > Utilitarios)
+
+2. Navegue ate a pasta onde voce extraiu o projeto.
+   Para isso, use o comando `cd` (significa "change directory" = mudar de pasta).
+
+   **Como descobrir o caminho da pasta:**
+   - Abra a pasta do projeto no Explorador de Arquivos (Windows) ou Finder (Mac)
+   - **Windows:** clique na barra de endereco no topo da janela - ela vai
+     mostrar o caminho completo (ex: `C:\Users\SeuNome\Downloads\emissao-nfe`).
+     Copie esse texto.
+   - **Mac:** clique com botao direito na pasta > "Obter Informacoes" e veja
+     o campo "Onde".
+
+   Agora no Prompt de Comando / Terminal, digite `cd ` (com espaco) e cole o
+   caminho. Exemplos:
+
    ```
-   cd C:\EmissaoNFe
+   cd C:\Users\SeuNome\Downloads\emissao-nfe
    ```
-   (ou o caminho onde voce extraiu)
-3. Execute:
+
+   ou se estiver em outra unidade de disco (ex: D:), primeiro troque de unidade:
+
+   ```
+   D:
+   cd D:\MinhasPastas\emissao-nfe
+   ```
+
+   **Dica:** voce pode tambem arrastar a pasta do Explorador de Arquivos para
+   dentro da janela do Prompt de Comando - o caminho sera colado automaticamente.
+
+3. Para confirmar que esta na pasta certa, digite:
+   ```
+   dir
+   ```
+   (Windows) ou `ls` (Mac/Linux). Voce deve ver os arquivos do projeto listados
+   (app.py, requirements.txt, etc).
+
+4. Agora instale as dependencias:
    ```
    pip install -r requirements.txt
    ```
@@ -107,25 +141,31 @@ FLASK_SECRET_KEY=coloque-qualquer-frase-longa-aqui
 
 ### 6. Iniciar o sistema
 
-1. Abra o Prompt de Comando / Terminal
-2. Navegue ate a pasta do projeto:
+1. Abra o **Prompt de Comando** (Windows: tecla Windows > digite cmd > Enter)
+2. Navegue ate a pasta do projeto (mesmo comando que usou no passo 3):
    ```
-   cd C:\EmissaoNFe
+   cd C:\Users\SeuNome\Downloads\emissao-nfe
    ```
-3. Execute:
+3. Digite o comando abaixo e aperte Enter:
    ```
    python app.py
    ```
-4. Voce vera uma mensagem como:
+4. Voce vera uma mensagem parecida com esta:
    ```
    * Running on http://0.0.0.0:5000
    ```
-5. Abra o navegador (Chrome, Firefox, Edge) e acesse:
+   **NAO feche esta janela!** Ela precisa ficar aberta enquanto voce usa o sistema.
+
+5. Abra o navegador (Chrome, Firefox, Edge) e na barra de endereco digite:
    ```
    http://localhost:5000
    ```
+   e aperte Enter.
 
-Pronto! O sistema esta rodando.
+Pronto! O sistema esta rodando. A pagina inicial vai aparecer no navegador.
+
+**Para usar da proxima vez:** repita apenas os passos 1 a 5 desta secao
+(nao precisa instalar nada de novo).
 
 ---
 
