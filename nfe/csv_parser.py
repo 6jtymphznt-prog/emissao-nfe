@@ -137,9 +137,15 @@ def parsear_nota(numero, linhas_nota):
         'volumes_peso_bruto': primeira.get('volumes_peso_bruto', ''),
     }
 
+    forma_pgto = primeira.get('forma_pagamento', '') or '01'
+    if forma_pgto == '90':
+        valor_pgto = 0
+    else:
+        valor_pgto = _float(primeira.get('valor_pagamento'), sum(p['valor_total'] for p in produtos))
+
     pagamento = {
-        'forma': primeira.get('forma_pagamento', '') or '01',
-        'valor': sum(p['valor_total'] for p in produtos),
+        'forma': forma_pgto,
+        'valor': valor_pgto,
     }
 
     info_adicionais = primeira.get('info_adicionais', '')

@@ -80,7 +80,8 @@
                         <tr><td><code>volumes_peso_bruto</code></td><td>Nao</td><td>Peso bruto em kg</td><td>6.000</td></tr>
 
                         <tr class="table-primary"><td colspan="4"><strong>PAGAMENTO</strong></td></tr>
-                        <tr><td><code>forma_pagamento</code></td><td>Nao</td><td>01=Dinheiro, 03=Credito, 04=Debito, 15=Boleto, 17=PIX</td><td>01</td></tr>
+                        <tr><td><code>forma_pagamento</code></td><td>Nao</td><td>01=Dinheiro, 03=Credito, 04=Debito, 15=Boleto, 17=PIX, 90=Sem Pagamento (doacao/transf.)</td><td>01</td></tr>
+                        <tr><td><code>valor_pagamento</code></td><td>Nao</td><td>Valor do pagamento. Se vazio, usa o total dos produtos. Se forma=90, automaticamente 0.</td><td>620.50</td></tr>
                         <tr><td><code>info_adicionais</code></td><td>Nao</td><td>Informacoes complementares</td><td></td></tr>
 
                         <tr class="table-primary"><td colspan="4"><strong>PRODUTO (uma linha por produto)</strong></td></tr>
