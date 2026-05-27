@@ -53,7 +53,7 @@ class NFeTransmitter:
 
         dados_msg.append(inner)
 
-        return etree.tostring(envelope, encoding='unicode', xml_declaration=True)
+        return '<?xml version="1.0" encoding="UTF-8"?>' + etree.tostring(envelope, encoding='unicode')
 
     def _send(self, servico, xml_content, timeout=60):
         url = self.urls[servico]
