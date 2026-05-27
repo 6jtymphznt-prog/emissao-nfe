@@ -119,7 +119,10 @@ class NFeBuilder:
         elif len(doc) == 11:
             etree.SubElement(dest_el, 'CPF').text = doc
 
-        etree.SubElement(dest_el, 'xNome').text = dest['razao_social']
+        if self.ambiente == '2':
+            etree.SubElement(dest_el, 'xNome').text = 'NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL'
+        else:
+            etree.SubElement(dest_el, 'xNome').text = dest['razao_social']
 
         ender_dest = etree.SubElement(dest_el, 'enderDest')
         etree.SubElement(ender_dest, 'xLgr').text = dest['logradouro']

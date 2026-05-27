@@ -181,6 +181,43 @@ Pronto! O sistema esta rodando. A pagina inicial vai aparecer no navegador.
 
 ---
 
+## Testar Antes de Emitir de Verdade (Homologacao)
+
+A SEFAZ oferece um ambiente de **testes (homologacao)** onde voce pode emitir
+notas a vontade sem nenhum valor fiscal. E muito recomendado testar primeiro!
+
+### Como ativar o modo de testes:
+
+1. Abra o arquivo `.env` com o Bloco de Notas
+2. Encontre a linha:
+   ```
+   NFE_AMBIENTE=1
+   ```
+3. Troque o `1` por `2`:
+   ```
+   NFE_AMBIENTE=2
+   ```
+4. Salve o arquivo
+5. Se o sistema ja estiver rodando, pare (Ctrl+C no terminal) e inicie de novo:
+   ```
+   python app.py
+   ```
+
+Quando estiver em homologacao:
+- Uma **faixa amarela** aparece no topo de todas as paginas avisando
+- O badge no menu muda para **"HOMOLOGACAO"** em amarelo
+- O nome do destinatario e trocado automaticamente pela SEFAZ para
+  "NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL"
+- Voce pode preencher qualquer dado no resto do formulario
+
+### Quando terminar os testes:
+
+1. Abra o `.env` e troque de volta para `NFE_AMBIENTE=1`
+2. Reinicie o sistema
+3. A faixa amarela desaparece e o badge volta para **"PRODUCAO"** em vermelho
+
+---
+
 ## Como Emitir uma NFe (pelo formulario)
 
 1. Acesse http://localhost:5000

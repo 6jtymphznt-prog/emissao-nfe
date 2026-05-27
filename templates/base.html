@@ -64,6 +64,12 @@
         </div>
     </nav>
 
+    {% if config.NFE_AMBIENTE == '2' %}
+    <div class="bg-warning text-dark text-center py-2 fw-bold" style="font-size: 1.1rem;">
+        AMBIENTE DE HOMOLOGACAO (TESTES) - As notas emitidas aqui NAO tem valor fiscal
+    </div>
+    {% endif %}
+
     <div class="container mt-4">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
