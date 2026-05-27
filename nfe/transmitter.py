@@ -81,7 +81,7 @@ class NFeTransmitter:
             nsmap={'soap12': SOAP_NS}
         )
         body = etree.SubElement(envelope, '{%s}Body' % SOAP_NS)
-        dados_msg = etree.SubElement(body, '{%s}nfeDadosMsg' % wsdl_ns)
+        dados_msg = etree.SubElement(body, 'nfeDadosMsg', nsmap={None: wsdl_ns})
 
         if isinstance(xml_content, str):
             inner = etree.fromstring(xml_content.encode('utf-8'))
@@ -144,10 +144,11 @@ class NFeTransmitter:
         return result
 
     def status_servico(self):
-        cons_stat = etree.Element('{%s}consStatServ' % NFE_NS, versao='4.00')
-        etree.SubElement(cons_stat, '{%s}tpAmb' % NFE_NS).text = self.ambiente
-        etree.SubElement(cons_stat, '{%s}cUF' % NFE_NS).text = self._cod_uf()
-        etree.SubElement(cons_stat, '{%s}xServ' % NFE_NS).text = 'STATUS'
+        nfemap = {None: NFE_NS}
+        cons_stat = etree.Element('consStatServ', versao='4.00', nsmap=nfemap)
+        etree.SubElement(cons_stat, 'tpAmb').text = self.ambiente
+        etree.SubElement(cons_stat, 'cUF').text = self._cod_uf()
+        etree.SubElement(cons_stat, 'xServ').text = 'STATUS'
         return self._send('NfeStatusServico', cons_stat)
 
     def autorizar(self, nfe_signed_element, id_lote=None):
@@ -155,44 +156,47 @@ class NFeTransmitter:
             import random
             id_lote = str(random.randint(1, 999999999999999))
 
-        envi_nfe = etree.Element('{%s}enviNFe' % NFE_NS, versao='4.00')
-        etree.SubElement(envi_nfe, '{%s}idLote' % NFE_NS).text = id_lote
-        etree.SubElement(envi_nfe, '{%s}indSinc' % NFE_NS).text = '1'
+        nfemap = {None: NFE_NS}
+        envi_nfe = etree.Element('enviNFe', versao='4.00', nsmap=nfemap)
+        etree.SubElement(envi_nfe, 'idLote').text = id_lote
+        etree.SubElement(envi_nfe, 'indSinc').text = '1'
         envi_nfe.append(nfe_signed_element)
 
         return self._send('NfeAutorizacao', envi_nfe)
 
     def consultar_protocolo(self, chave_acesso):
-        cons_sit = etree.Element('{%s}consSitNFe' % NFE_NS, versao='4.00')
-        etree.SubElement(cons_sit, '{%s}tpAmb' % NFE_NS).text = self.ambiente
-        etree.SubElement(cons_sit, '{%s}xServ' % NFE_NS).text = 'CONSULTAR'
-        etree.SubElement(cons_sit, '{%s}chNFe' % NFE_NS).text = chave_acesso
+        nfemap = {None: NFE_NS}
+        cons_sit = etree.Element('consSitNFe', versao='4.00', nsmap=nfemap)
+        etree.SubElement(cons_sit, 'tpAmb').text = self.ambiente
+        etree.SubElement(cons_sit, 'xServ').text = 'CONSULTAR'
+        etree.SubElement(cons_sit, 'chNFe').text = chave_acesso
         return self._send('NfeConsultaProtocolo', cons_sit)
 
     def cancelar(self, chave_acesso, protocolo, justificativa, cnpj):
         from .utils import CODIGOS_UF
 
         cod_uf = CODIGOS_UF.get(self.uf, '35')
+        nfemap = {None: NFE_NS}
 
-        evento = etree.Element('{%s}envEvento' % NFE_NS, versao='1.00')
-        etree.SubElement(evento, '{%s}idLote' % NFE_NS).text = '1'
+        evento = etree.Element('envEvento', versao='1.00', nsmap=nfemap)
+        etree.SubElement(evento, 'idLote').text = '1'
 
-        ev = etree.SubElement(evento, '{%s}evento' % NFE_NS, versao='1.00')
-        inf_evento = etree.SubElement(ev, '{%s}infEvento' % NFE_NS, Id='ID110111' + chave_acesso + '01')
-        etree.SubElement(inf_evento, '{%s}cOrgao' % NFE_NS).text = cod_uf
-        etree.SubElement(inf_evento, '{%s}tpAmb' % NFE_NS).text = self.ambiente
-        etree.SubElement(inf_evento, '{%s}CNPJ' % NFE_NS).text = cnpj
-        etree.SubElement(inf_evento, '{%s}chNFe' % NFE_NS).text = chave_acesso
+        ev = etree.SubElement(evento, 'evento', versao='1.00')
+        inf_evento = etree.SubElement(ev, 'infEvento', Id='ID110111' + chave_acesso + '01')
+        etree.SubElement(inf_evento, 'cOrgao').text = cod_uf
+        etree.SubElement(inf_evento, 'tpAmb').text = self.ambiente
+        etree.SubElement(inf_evento, 'CNPJ').text = cnpj
+        etree.SubElement(inf_evento, 'chNFe').text = chave_acesso
         from .utils import agora_sefaz
-        etree.SubElement(inf_evento, '{%s}dhEvento' % NFE_NS).text = agora_sefaz()
-        etree.SubElement(inf_evento, '{%s}tpEvento' % NFE_NS).text = '110111'
-        etree.SubElement(inf_evento, '{%s}nSeqEvento' % NFE_NS).text = '1'
-        etree.SubElement(inf_evento, '{%s}verEvento' % NFE_NS).text = '1.00'
+        etree.SubElement(inf_evento, 'dhEvento').text = agora_sefaz()
+        etree.SubElement(inf_evento, 'tpEvento').text = '110111'
+        etree.SubElement(inf_evento, 'nSeqEvento').text = '1'
+        etree.SubElement(inf_evento, 'verEvento').text = '1.00'
 
-        det_evento = etree.SubElement(inf_evento, '{%s}detEvento' % NFE_NS, versao='1.00')
-        etree.SubElement(det_evento, '{%s}descEvento' % NFE_NS).text = 'Cancelamento'
-        etree.SubElement(det_evento, '{%s}nProt' % NFE_NS).text = protocolo
-        etree.SubElement(det_evento, '{%s}xJust' % NFE_NS).text = justificativa
+        det_evento = etree.SubElement(inf_evento, 'detEvento', versao='1.00')
+        etree.SubElement(det_evento, 'descEvento').text = 'Cancelamento'
+        etree.SubElement(det_evento, 'nProt').text = protocolo
+        etree.SubElement(det_evento, 'xJust').text = justificativa
 
         self.signer.sign_nfe(ev)
 
