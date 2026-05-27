@@ -10,6 +10,7 @@ from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import hashes
 from cryptography.x509.oid import AuthorityInformationAccessOID
 
+NAMESPACE_NFE = 'http://www.portalfiscal.inf.br/nfe'
 NAMESPACE_DS = 'http://www.w3.org/2000/09/xmldsig#'
 C14N_ALG = 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315'
 ENVELOPED_SIG = 'http://www.w3.org/2000/09/xmldsig#enveloped-signature'
@@ -112,7 +113,7 @@ class NFeSigner:
         return len(self._chain_certs)
 
     def sign_nfe(self, nfe_element):
-        inf_nfe = nfe_element.find('{http://www.portalfiscal.inf.br/nfe}infNFe')
+        inf_nfe = nfe_element.find('{%s}infNFe' % NAMESPACE_NFE)
         if inf_nfe is None:
             inf_nfe = nfe_element.find('infNFe')
         if inf_nfe is None:
@@ -123,27 +124,39 @@ class NFeSigner:
         c14n_inf = etree.tostring(inf_nfe, method='c14n', exclusive=False, with_comments=False)
         digest_value = base64.b64encode(hashlib.sha1(c14n_inf).digest()).decode()
 
-        nsmap_ds = {'ds': NAMESPACE_DS}
+        cert_der = self._certificate.public_bytes(Encoding.DER)
+        cert_b64 = base64.b64encode(cert_der).decode()
 
-        signed_info = etree.Element('{%s}SignedInfo' % NAMESPACE_DS, nsmap=nsmap_ds)
-        c14n_method = etree.SubElement(signed_info, '{%s}CanonicalizationMethod' % NAMESPACE_DS)
+        sig_nsmap = {None: NAMESPACE_DS}
+
+        signature = etree.SubElement(nfe_element, '{%s}Signature' % NAMESPACE_DS, nsmap=sig_nsmap)
+
+        signed_info = etree.SubElement(signature, 'SignedInfo')
+        c14n_method = etree.SubElement(signed_info, 'CanonicalizationMethod')
         c14n_method.set('Algorithm', C14N_ALG)
-        sig_method = etree.SubElement(signed_info, '{%s}SignatureMethod' % NAMESPACE_DS)
+        sig_method = etree.SubElement(signed_info, 'SignatureMethod')
         sig_method.set('Algorithm', RSA_SHA1)
 
-        reference = etree.SubElement(signed_info, '{%s}Reference' % NAMESPACE_DS)
+        reference = etree.SubElement(signed_info, 'Reference')
         reference.set('URI', uri)
 
-        transforms = etree.SubElement(reference, '{%s}Transforms' % NAMESPACE_DS)
-        transform1 = etree.SubElement(transforms, '{%s}Transform' % NAMESPACE_DS)
+        transforms = etree.SubElement(reference, 'Transforms')
+        transform1 = etree.SubElement(transforms, 'Transform')
         transform1.set('Algorithm', ENVELOPED_SIG)
-        transform2 = etree.SubElement(transforms, '{%s}Transform' % NAMESPACE_DS)
+        transform2 = etree.SubElement(transforms, 'Transform')
         transform2.set('Algorithm', C14N_ALG)
 
-        digest_method = etree.SubElement(reference, '{%s}DigestMethod' % NAMESPACE_DS)
+        digest_method = etree.SubElement(reference, 'DigestMethod')
         digest_method.set('Algorithm', SHA1)
-        digest_el = etree.SubElement(reference, '{%s}DigestValue' % NAMESPACE_DS)
+        digest_el = etree.SubElement(reference, 'DigestValue')
         digest_el.text = digest_value
+
+        sig_value_el = etree.SubElement(signature, 'SignatureValue')
+
+        key_info = etree.SubElement(signature, 'KeyInfo')
+        x509_data = etree.SubElement(key_info, 'X509Data')
+        x509_cert = etree.SubElement(x509_data, 'X509Certificate')
+        x509_cert.text = cert_b64
 
         c14n_signed_info = etree.tostring(signed_info, method='c14n', exclusive=False, with_comments=False)
 
@@ -152,21 +165,7 @@ class NFeSigner:
             padding.PKCS1v15(),
             hashes.SHA1()
         )
-        sig_value_b64 = base64.b64encode(signature_value).decode()
-
-        signature = etree.SubElement(nfe_element, '{%s}Signature' % NAMESPACE_DS)
-
-        signature.append(signed_info)
-
-        sig_value_el = etree.SubElement(signature, '{%s}SignatureValue' % NAMESPACE_DS)
-        sig_value_el.text = sig_value_b64
-
-        key_info = etree.SubElement(signature, '{%s}KeyInfo' % NAMESPACE_DS)
-        x509_data = etree.SubElement(key_info, '{%s}X509Data' % NAMESPACE_DS)
-        x509_cert = etree.SubElement(x509_data, '{%s}X509Certificate' % NAMESPACE_DS)
-
-        cert_der = self._certificate.public_bytes(Encoding.DER)
-        x509_cert.text = base64.b64encode(cert_der).decode()
+        sig_value_el.text = base64.b64encode(signature_value).decode()
 
         return nfe_element
 
