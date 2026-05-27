@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+*.pfx
+*.p12
+certificados/
+xmls/
+danfes/
+*.pem
+*.key
+*.cert
+venv/
+.venv/
+instance/
+*.db

@@ -1,0 +1,418 @@
+{% extends "base.html" %}
+{% block title %}Emitir NFe{% endblock %}
+
+{% block content %}
+<h3 class="mb-4"><i class="bi bi-plus-circle"></i> Emitir Nota Fiscal Eletronica</h3>
+
+<form method="POST" id="formNFe">
+
+    <!-- Identificacao -->
+    <div class="form-section">
+        <h5><i class="bi bi-card-heading"></i> Identificacao</h5>
+        <div class="row">
+            <div class="col-md-2">
+                <label class="form-label">Numero</label>
+                <input type="number" class="form-control" name="numero" value="{{ proximo_numero }}" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Natureza da Operacao</label>
+                <input type="text" class="form-control" name="natureza_operacao" value="VENDA DE MERCADORIA" required>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Tipo</label>
+                <select class="form-select" name="tipo_operacao">
+                    <option value="1" selected>Saida</option>
+                    <option value="0">Entrada</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Finalidade</label>
+                <select class="form-select" name="finalidade">
+                    <option value="1" selected>Normal</option>
+                    <option value="2">Complementar</option>
+                    <option value="3">Ajuste</option>
+                    <option value="4">Devolucao</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Consumidor Final</label>
+                <select class="form-select" name="consumidor_final">
+                    <option value="0" selected>Nao</option>
+                    <option value="1">Sim</option>
+                </select>
+            </div>
+            <div class="col-md-1">
+                <label class="form-label">Presenca</label>
+                <select class="form-select" name="presenca">
+                    <option value="0">N/A</option>
+                    <option value="1" selected>Presencial</option>
+                    <option value="2">Internet</option>
+                    <option value="3">Teleatend.</option>
+                    <option value="9">Outros</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Destinatario -->
+    <div class="form-section">
+        <h5><i class="bi bi-person"></i> Destinatario</h5>
+        <div class="row mb-2">
+            <div class="col-md-3">
+                <label class="form-label">CNPJ/CPF</label>
+                <input type="text" class="form-control" name="dest_cnpj_cpf" required placeholder="Somente numeros">
+            </div>
+            <div class="col-md-5">
+                <label class="form-label">Razao Social / Nome</label>
+                <input type="text" class="form-control" name="dest_razao_social" required>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">IE</label>
+                <input type="text" class="form-control" name="dest_ie">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Ind. IE Dest.</label>
+                <select class="form-select" name="dest_ind_ie">
+                    <option value="1">Contribuinte</option>
+                    <option value="2">Isento</option>
+                    <option value="9" selected>Nao Contribuinte</option>
+                </select>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-md-5">
+                <label class="form-label">Logradouro</label>
+                <input type="text" class="form-control" name="dest_logradouro" required>
+            </div>
+            <div class="col-md-1">
+                <label class="form-label">Numero</label>
+                <input type="text" class="form-control" name="dest_numero" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Complemento</label>
+                <input type="text" class="form-control" name="dest_complemento">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Bairro</label>
+                <input type="text" class="form-control" name="dest_bairro" required>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-md-2">
+                <label class="form-label">Cod. Municipio (IBGE)</label>
+                <input type="text" class="form-control" name="dest_cod_municipio" required placeholder="Ex: 3550308">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Municipio</label>
+                <input type="text" class="form-control" name="dest_municipio" required>
+            </div>
+            <div class="col-md-1">
+                <label class="form-label">UF</label>
+                <select class="form-select" name="dest_uf" required>
+                    {% for uf in codigos_uf.keys()|sort %}
+                    <option value="{{ uf }}" {% if uf == config.EMIT_UF %}selected{% endif %}>{{ uf }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">CEP</label>
+                <input type="text" class="form-control" name="dest_cep">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Telefone</label>
+                <input type="text" class="form-control" name="dest_telefone">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" name="dest_email">
+            </div>
+        </div>
+    </div>
+
+    <!-- Produtos -->
+    <div class="form-section">
+        <h5><i class="bi bi-box"></i> Produtos</h5>
+        <input type="hidden" name="qtd_produtos" id="qtd_produtos" value="1">
+
+        <div id="produtos-container">
+            <div class="produto-card" id="produto-1">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <strong>Produto 1</strong>
+                    <button type="button" class="btn btn-sm btn-outline-danger btn-remove-prod d-none" onclick="removerProduto(1)">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-2">
+                        <label class="form-label">Codigo</label>
+                        <input type="text" class="form-control form-control-sm" name="prod_1_codigo" value="1" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Descricao</label>
+                        <input type="text" class="form-control form-control-sm" name="prod_1_descricao" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">NCM</label>
+                        <input type="text" class="form-control form-control-sm" name="prod_1_ncm" required placeholder="Ex: 84719012">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">CFOP</label>
+                        <input type="text" class="form-control form-control-sm" name="prod_1_cfop" required placeholder="Ex: 5102">
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label">Unidade</label>
+                        <input type="text" class="form-control form-control-sm" name="prod_1_unidade" value="UN">
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label">EAN</label>
+                        <input type="text" class="form-control form-control-sm" name="prod_1_ean" value="SEM GTIN">
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-2">
+                        <label class="form-label">Quantidade</label>
+                        <input type="number" step="0.0001" class="form-control form-control-sm" name="prod_1_quantidade" required value="1">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Valor Unitario</label>
+                        <input type="number" step="0.0001" class="form-control form-control-sm" name="prod_1_valor_unitario" required>
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label">Origem</label>
+                        <select class="form-select form-select-sm" name="prod_1_icms_orig">
+                            <option value="0" selected>0-Nacional</option>
+                            <option value="1">1-Import. Direta</option>
+                            <option value="2">2-Import. Indireta</option>
+                            <option value="3">3-Nacional 40-70%</option>
+                            <option value="8">8-Nacional Import.</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">CST ICMS</label>
+                        <select class="form-select form-select-sm" name="prod_1_icms_cst">
+                            <option value="00">00-Tributada integralmente</option>
+                            <option value="10">10-Trib. com ST</option>
+                            <option value="20">20-Com reducao BC</option>
+                            <option value="40">40-Isenta</option>
+                            <option value="41">41-Nao tributada</option>
+                            <option value="50">50-Suspensao</option>
+                            <option value="60">60-ICMS cobrado ST</option>
+                            <option value="90">90-Outros</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Aliq. ICMS %</label>
+                        <input type="number" step="0.01" class="form-control form-control-sm" name="prod_1_icms_aliquota" value="18">
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label">CEST</label>
+                        <input type="text" class="form-control form-control-sm" name="prod_1_cest">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">CSOSN (Simples)</label>
+                        <input type="text" class="form-control form-control-sm" name="prod_1_icms_csosn" placeholder="Ex: 102">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-2">
+                        <label class="form-label">CST PIS</label>
+                        <select class="form-select form-select-sm" name="prod_1_pis_cst">
+                            <option value="01">01-Tributavel aliq. %</option>
+                            <option value="04">04-Monofasica zero</option>
+                            <option value="06">06-Aliq. zero</option>
+                            <option value="07" selected>07-Isenta</option>
+                            <option value="08">08-Sem incidencia</option>
+                            <option value="49">49-Outras</option>
+                            <option value="99">99-Outras</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Aliq. PIS %</label>
+                        <input type="number" step="0.01" class="form-control form-control-sm" name="prod_1_pis_aliquota" value="0">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">CST COFINS</label>
+                        <select class="form-select form-select-sm" name="prod_1_cofins_cst">
+                            <option value="01">01-Tributavel aliq. %</option>
+                            <option value="04">04-Monofasica zero</option>
+                            <option value="06">06-Aliq. zero</option>
+                            <option value="07" selected>07-Isenta</option>
+                            <option value="08">08-Sem incidencia</option>
+                            <option value="49">49-Outras</option>
+                            <option value="99">99-Outras</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Aliq. COFINS %</label>
+                        <input type="number" step="0.01" class="form-control form-control-sm" name="prod_1_cofins_aliquota" value="0">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button type="button" class="btn btn-outline-primary mt-2" onclick="adicionarProduto()">
+            <i class="bi bi-plus"></i> Adicionar Produto
+        </button>
+    </div>
+
+    <!-- Transporte -->
+    <div class="form-section">
+        <h5><i class="bi bi-truck"></i> Transporte</h5>
+        <div class="row mb-2">
+            <div class="col-md-3">
+                <label class="form-label">Modalidade do Frete</label>
+                <select class="form-select" name="mod_frete">
+                    <option value="0">0-Emitente</option>
+                    <option value="1">1-Destinatario</option>
+                    <option value="2">2-Terceiros</option>
+                    <option value="3">3-Proprio Remetente</option>
+                    <option value="4">4-Proprio Destinatario</option>
+                    <option value="9" selected>9-Sem Frete</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">CNPJ/CPF Transportadora</label>
+                <input type="text" class="form-control" name="transp_cnpj">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Nome Transportadora</label>
+                <input type="text" class="form-control" name="transp_nome">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">UF Transportadora</label>
+                <select class="form-select" name="transp_uf">
+                    <option value="">--</option>
+                    {% for uf in codigos_uf.keys()|sort %}
+                    <option value="{{ uf }}">{{ uf }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-2">
+                <label class="form-label">Qtd. Volumes</label>
+                <input type="number" class="form-control" name="volumes_qtd">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Especie</label>
+                <input type="text" class="form-control" name="volumes_especie" placeholder="Ex: CAIXA">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Peso Liquido (kg)</label>
+                <input type="number" step="0.001" class="form-control" name="volumes_peso_liq">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Peso Bruto (kg)</label>
+                <input type="number" step="0.001" class="form-control" name="volumes_peso_bruto">
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagamento -->
+    <div class="form-section">
+        <h5><i class="bi bi-credit-card"></i> Pagamento</h5>
+        <div class="row">
+            <div class="col-md-4">
+                <label class="form-label">Forma de Pagamento</label>
+                <select class="form-select" name="forma_pagamento">
+                    <option value="01">01-Dinheiro</option>
+                    <option value="02">02-Cheque</option>
+                    <option value="03">03-Cartao de Credito</option>
+                    <option value="04">04-Cartao de Debito</option>
+                    <option value="05">05-Credito Loja</option>
+                    <option value="10">10-Vale Alimentacao</option>
+                    <option value="11">11-Vale Refeicao</option>
+                    <option value="12">12-Vale Presente</option>
+                    <option value="13">13-Vale Combustivel</option>
+                    <option value="15">15-Boleto Bancario</option>
+                    <option value="16">16-Deposito Bancario</option>
+                    <option value="17">17-PIX</option>
+                    <option value="18">18-Transferencia</option>
+                    <option value="90">90-Sem Pagamento</option>
+                    <option value="99">99-Outros</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Adicionais -->
+    <div class="form-section">
+        <h5><i class="bi bi-info-circle"></i> Informacoes Adicionais</h5>
+        <div class="row">
+            <div class="col-12">
+                <textarea class="form-control" name="info_adicionais" rows="3" maxlength="5000"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-grid gap-2 d-md-flex justify-content-md-end mb-4">
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary btn-lg" id="btnEmitir">
+            <i class="bi bi-send"></i> Emitir NFe
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let contadorProdutos = 1;
+
+function adicionarProduto() {
+    contadorProdutos++;
+    const container = document.getElementById('produtos-container');
+    const primeiro = document.getElementById('produto-1');
+    const clone = primeiro.cloneNode(true);
+
+    clone.id = 'produto-' + contadorProdutos;
+    clone.querySelector('strong').textContent = 'Produto ' + contadorProdutos;
+
+    const btnRemove = clone.querySelector('.btn-remove-prod');
+    btnRemove.classList.remove('d-none');
+    btnRemove.setAttribute('onclick', 'removerProduto(' + contadorProdutos + ')');
+
+    clone.querySelectorAll('input, select').forEach(function(el) {
+        el.name = el.name.replace(/prod_\d+_/, 'prod_' + contadorProdutos + '_');
+        if (el.type === 'text' && el.name.includes('codigo')) {
+            el.value = contadorProdutos.toString();
+        } else if (el.type === 'text' && el.name.includes('descricao')) {
+            el.value = '';
+        } else if (el.type === 'number' && el.name.includes('valor_unitario')) {
+            el.value = '';
+        }
+    });
+
+    container.appendChild(clone);
+    document.getElementById('qtd_produtos').value = contadorProdutos;
+}
+
+function removerProduto(id) {
+    const el = document.getElementById('produto-' + id);
+    if (el) el.remove();
+
+    let idx = 1;
+    document.querySelectorAll('.produto-card').forEach(function(card) {
+        card.id = 'produto-' + idx;
+        card.querySelector('strong').textContent = 'Produto ' + idx;
+        card.querySelectorAll('input, select').forEach(function(input) {
+            input.name = input.name.replace(/prod_\d+_/, 'prod_' + idx + '_');
+        });
+        const btn = card.querySelector('.btn-remove-prod');
+        if (idx === 1) {
+            btn.classList.add('d-none');
+        } else {
+            btn.classList.remove('d-none');
+            btn.setAttribute('onclick', 'removerProduto(' + idx + ')');
+        }
+        idx++;
+    });
+    contadorProdutos = idx - 1;
+    document.getElementById('qtd_produtos').value = contadorProdutos;
+}
+
+document.getElementById('formNFe').addEventListener('submit', function() {
+    document.getElementById('btnEmitir').disabled = true;
+    document.getElementById('btnEmitir').innerHTML = '<span class="spinner-border spinner-border-sm"></span> Emitindo...';
+});
+</script>
+{% endblock %}
