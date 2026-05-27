@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Diagnostico{% endblock %}
+
+{% block content %}
+<h3 class="mb-4"><i class="bi bi-wrench"></i> Diagnostico do Sistema</h3>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="bi bi-gear"></i> Configuracao Atual
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3"><strong>UF:</strong> {{ config.EMIT_UF }}</div>
+            <div class="col-md-3"><strong>CNPJ:</strong> {{ config.EMIT_CNPJ | fmt_cnpj }}</div>
+            <div class="col-md-3"><strong>Ambiente:</strong>
+                {% if config.NFE_AMBIENTE == '1' %}
+                    <span class="badge bg-danger">Producao</span>
+                {% else %}
+                    <span class="badge bg-warning text-dark">Homologacao</span>
+                {% endif %}
+            </div>
+            <div class="col-md-3"><strong>Certificado:</strong> {{ config.CERT_PFX_PATH }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="bi bi-clipboard-check"></i> Resultados dos Testes
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-striped mb-0">
+            <thead>
+                <tr>
+                    <th style="width: 40px;"></th>
+                    <th>Teste</th>
+                    <th>Resultado</th>
+                    <th>Detalhe</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in resultados %}
+                <tr>
+                    <td class="text-center">
+                        {% if r.ok %}
+                            <i class="bi bi-check-circle-fill text-success" style="font-size: 1.3rem;"></i>
+                        {% else %}
+                            <i class="bi bi-x-circle-fill text-danger" style="font-size: 1.3rem;"></i>
+                        {% endif %}
+                    </td>
+                    <td><strong>{{ r.teste }}</strong></td>
+                    <td>{{ r.msg }}</td>
+                    <td><small class="text-muted">{{ r.detalhe }}</small></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if cert_info %}
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="bi bi-shield-lock"></i> Dados do Certificado Digital
+    </div>
+    <div class="card-body">
+        {% if cert_info.get('subject') %}
+            <p><strong>Titular:</strong> {{ cert_info.subject }}</p>
+        {% endif %}
+        {% if cert_info.get('issuer') %}
+            <p><strong>Emitido por:</strong> {{ cert_info.issuer }}</p>
+        {% endif %}
+        {% if cert_info.get('validade_inicio') %}
+            <p><strong>Valido de:</strong> {{ cert_info.validade_inicio }} <strong>ate:</strong> {{ cert_info.validade_fim }}</p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<a href="{{ url_for('index') }}" class="btn btn-secondary mb-4">
+    <i class="bi bi-arrow-left"></i> Voltar
+</a>
+{% endblock %}

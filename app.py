@@ -440,6 +440,161 @@ def download_danfe(chave):
     return redirect(url_for('index'))
 
 
+@app.route('/diagnostico')
+def diagnostico():
+    resultados = []
+
+    # 1. Verificar se o arquivo do certificado existe
+    cert_path = Config.CERT_PFX_PATH
+    cert_existe = os.path.exists(cert_path)
+    resultados.append({
+        'teste': 'Arquivo do certificado',
+        'detalhe': cert_path,
+        'ok': cert_existe,
+        'msg': 'Encontrado' if cert_existe else 'Arquivo NAO encontrado. Verifique o caminho no .env',
+    })
+
+    if not cert_existe:
+        return render_template('diagnostico.html', config=Config, resultados=resultados)
+
+    # 2. Verificar se consegue abrir o certificado com a senha
+    cert_info = {}
+    try:
+        from cryptography.hazmat.primitives.serialization import pkcs12
+        with open(cert_path, 'rb') as f:
+            pfx_data = f.read()
+        private_key, certificate, additional = pkcs12.load_key_and_certificates(
+            pfx_data, Config.CERT_PFX_PASSWORD.encode()
+        )
+        cert_info['subject'] = certificate.subject.rfc4514_string()
+        cert_info['issuer'] = certificate.issuer.rfc4514_string()
+        cert_info['validade_inicio'] = certificate.not_valid_before_utc.strftime('%d/%m/%Y %H:%M')
+        cert_info['validade_fim'] = certificate.not_valid_after_utc.strftime('%d/%m/%Y %H:%M')
+
+        from datetime import datetime, timezone
+        agora = datetime.now(timezone.utc)
+        vencido = agora > certificate.not_valid_after_utc
+        ainda_nao_valido = agora < certificate.not_valid_before_utc
+
+        resultados.append({
+            'teste': 'Senha do certificado',
+            'detalhe': 'Certificado aberto com sucesso',
+            'ok': True,
+            'msg': 'Senha correta',
+        })
+
+        resultados.append({
+            'teste': 'Titular do certificado',
+            'detalhe': cert_info['subject'],
+            'ok': True,
+            'msg': cert_info['subject'],
+        })
+
+        resultados.append({
+            'teste': 'Validade do certificado',
+            'detalhe': f"De {cert_info['validade_inicio']} ate {cert_info['validade_fim']}",
+            'ok': not vencido and not ainda_nao_valido,
+            'msg': 'VENCIDO!' if vencido else ('Ainda nao esta valido' if ainda_nao_valido else 'Dentro da validade'),
+        })
+    except Exception as e:
+        resultados.append({
+            'teste': 'Senha do certificado',
+            'detalhe': str(e),
+            'ok': False,
+            'msg': 'Senha INCORRETA ou arquivo corrompido. Verifique CERT_PFX_PASSWORD no .env',
+        })
+        return render_template('diagnostico.html', config=Config, resultados=resultados, cert_info=cert_info)
+
+    # 3. Verificar URLs SEFAZ
+    from nfe.sefaz_urls import obter_urls_sefaz
+    urls = obter_urls_sefaz(Config.EMIT_UF, Config.NFE_AMBIENTE)
+    url_status = urls.get('NfeStatusServico', '')
+    resultados.append({
+        'teste': 'URL SEFAZ Status',
+        'detalhe': url_status,
+        'ok': bool(url_status),
+        'msg': f'UF={Config.EMIT_UF} Ambiente={"Homologacao" if Config.NFE_AMBIENTE == "2" else "Producao"}',
+    })
+
+    # 4. Testar conexao com a SEFAZ
+    try:
+        import requests as req
+        signer = get_signer()
+        cert_pem, key_pem = signer.get_cert_key_temp_files()
+        try:
+            resp = req.get(url_status, cert=(cert_pem, key_pem), timeout=15, verify=True)
+            resultados.append({
+                'teste': 'Conexao com SEFAZ (com certificado)',
+                'detalhe': f'HTTP {resp.status_code}',
+                'ok': True,
+                'msg': f'Conexao estabelecida (HTTP {resp.status_code})',
+            })
+        except req.exceptions.SSLError as e:
+            resultados.append({
+                'teste': 'Conexao com SEFAZ (com certificado)',
+                'detalhe': str(e)[:300],
+                'ok': False,
+                'msg': 'Erro SSL/TLS. O certificado pode nao ser aceito pela SEFAZ ou estar vencido.',
+            })
+        except req.exceptions.ConnectionError as e:
+            resultados.append({
+                'teste': 'Conexao com SEFAZ (com certificado)',
+                'detalhe': str(e)[:300],
+                'ok': False,
+                'msg': 'Conexao recusada pela SEFAZ. Verifique se o certificado e valido e se a internet esta funcionando.',
+            })
+        except req.exceptions.Timeout:
+            resultados.append({
+                'teste': 'Conexao com SEFAZ (com certificado)',
+                'detalhe': 'Timeout de 15 segundos',
+                'ok': False,
+                'msg': 'SEFAZ nao respondeu. O servico pode estar fora do ar.',
+            })
+        finally:
+            signer.cleanup_temp_files(cert_pem, key_pem)
+    except Exception as e:
+        resultados.append({
+            'teste': 'Conexao com SEFAZ',
+            'detalhe': str(e)[:300],
+            'ok': False,
+            'msg': str(e)[:200],
+        })
+
+    # 5. Testar conexao SEM certificado (para diferenciar problema de rede vs certificado)
+    try:
+        import requests as req
+        resp = req.get(url_status, timeout=15, verify=True)
+        resultados.append({
+            'teste': 'Conexao com SEFAZ (sem certificado)',
+            'detalhe': f'HTTP {resp.status_code}',
+            'ok': True,
+            'msg': 'Rede OK. Se o teste anterior falhou, o problema e no certificado.',
+        })
+    except req.exceptions.SSLError:
+        resultados.append({
+            'teste': 'Conexao com SEFAZ (sem certificado)',
+            'detalhe': 'Esperado - SEFAZ exige certificado',
+            'ok': True,
+            'msg': 'Rede OK (SEFAZ respondeu pedindo certificado, o que e normal).',
+        })
+    except req.exceptions.ConnectionError:
+        resultados.append({
+            'teste': 'Conexao com SEFAZ (sem certificado)',
+            'detalhe': 'Sem conexao',
+            'ok': False,
+            'msg': 'Sem acesso a internet ou SEFAZ fora do ar. Verifique sua conexao.',
+        })
+    except Exception as e:
+        resultados.append({
+            'teste': 'Conexao com SEFAZ (sem certificado)',
+            'detalhe': str(e)[:200],
+            'ok': False,
+            'msg': str(e)[:200],
+        })
+
+    return render_template('diagnostico.html', config=Config, resultados=resultados, cert_info=cert_info)
+
+
 @app.route('/xml/<chave>')
 def download_xml(chave):
     for suffix in ('_autorizada.xml', '_assinada.xml'):

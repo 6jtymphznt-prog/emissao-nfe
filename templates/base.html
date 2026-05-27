@@ -51,6 +51,9 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('status_servico') }}"><i class="bi bi-wifi"></i> Status SEFAZ</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('diagnostico') }}"><i class="bi bi-wrench"></i> Diagnostico</a>
+                    </li>
                 </ul>
                 <span class="navbar-text">
                     {% if config.NFE_AMBIENTE == '1' %}
