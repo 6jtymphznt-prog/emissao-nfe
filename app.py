@@ -519,36 +519,46 @@ def diagnostico():
         'msg': f'UF={Config.EMIT_UF} Ambiente={"Homologacao" if Config.NFE_AMBIENTE == "2" else "Producao"}',
     })
 
-    # 4. Testar conexao com a SEFAZ
+    # 4. Testar conexao com a SEFAZ (forcando TLS 1.2)
     try:
         import requests as req
+        import ssl
+        import certifi
+        from requests.adapters import HTTPAdapter
+        from urllib3.util.ssl_ import create_urllib3_context
+        from nfe.transmitter import SefazTLSAdapter
+
         signer = get_signer()
         cert_pem, key_pem = signer.get_cert_key_temp_files()
         try:
-            resp = req.get(url_status, cert=(cert_pem, key_pem), timeout=15, verify=True)
+            session = req.Session()
+            adapter = SefazTLSAdapter(cert_pem, key_pem)
+            session.mount('https://', adapter)
+            resp = session.get(url_status, timeout=15)
             resultados.append({
-                'teste': 'Conexao com SEFAZ (com certificado)',
+                'teste': 'Conexao com SEFAZ (TLS 1.2 + certificado)',
                 'detalhe': f'HTTP {resp.status_code}',
                 'ok': True,
-                'msg': f'Conexao estabelecida (HTTP {resp.status_code})',
+                'msg': f'Conexao estabelecida com sucesso (HTTP {resp.status_code})',
             })
         except req.exceptions.SSLError as e:
+            err_str = str(e)
             resultados.append({
-                'teste': 'Conexao com SEFAZ (com certificado)',
-                'detalhe': str(e)[:300],
+                'teste': 'Conexao com SEFAZ (TLS 1.2 + certificado)',
+                'detalhe': err_str[:300],
                 'ok': False,
-                'msg': 'Erro SSL/TLS. O certificado pode nao ser aceito pela SEFAZ ou estar vencido.',
+                'msg': 'Erro SSL/TLS. O certificado pode nao ser aceito pela SEFAZ.',
             })
         except req.exceptions.ConnectionError as e:
             resultados.append({
-                'teste': 'Conexao com SEFAZ (com certificado)',
+                'teste': 'Conexao com SEFAZ (TLS 1.2 + certificado)',
                 'detalhe': str(e)[:300],
                 'ok': False,
-                'msg': 'Conexao recusada pela SEFAZ. Verifique se o certificado e valido e se a internet esta funcionando.',
+                'msg': 'Conexao recusada pela SEFAZ.',
             })
         except req.exceptions.Timeout:
             resultados.append({
-                'teste': 'Conexao com SEFAZ (com certificado)',
+                'teste': 'Conexao com SEFAZ (TLS 1.2 + certificado)',
                 'detalhe': 'Timeout de 15 segundos',
                 'ok': False,
                 'msg': 'SEFAZ nao respondeu. O servico pode estar fora do ar.',

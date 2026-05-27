@@ -1,4 +1,8 @@
+import ssl
+import certifi
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.ssl_ import create_urllib3_context
 from lxml import etree
 from .sefaz_urls import obter_urls_sefaz
 
@@ -13,6 +17,23 @@ WSDL_ACTIONS = {
     'NfeInutilizacao': 'http://www.portalfiscal.inf.br/nfe/wsdl/NFeInutilizacao4',
     'RecepcaoEvento': 'http://www.portalfiscal.inf.br/nfe/wsdl/NFeRecepcaoEvento4',
 }
+
+
+class SefazTLSAdapter(HTTPAdapter):
+
+    def __init__(self, cert_pem_path, key_pem_path, **kwargs):
+        self.cert_pem_path = cert_pem_path
+        self.key_pem_path = key_pem_path
+        super().__init__(**kwargs)
+
+    def init_poolmanager(self, *args, **kwargs):
+        ctx = create_urllib3_context()
+        ctx.minimum_version = ssl.TLSVersion.TLSv1_2
+        ctx.maximum_version = ssl.TLSVersion.TLSv1_2
+        ctx.load_cert_chain(certfile=self.cert_pem_path, keyfile=self.key_pem_path)
+        ctx.load_verify_locations(certifi.where())
+        kwargs['ssl_context'] = ctx
+        super().init_poolmanager(*args, **kwargs)
 
 
 class NFeTransmitter:
@@ -36,6 +57,13 @@ class NFeTransmitter:
             self._cert_path = None
             self._key_path = None
 
+    def _create_session(self):
+        cert_path, key_path = self._get_cert_files()
+        session = requests.Session()
+        adapter = SefazTLSAdapter(cert_path, key_path)
+        session.mount('https://', adapter)
+        return session
+
     def _build_soap_envelope(self, servico, xml_content):
         wsdl_ns = WSDL_ACTIONS[servico]
 
@@ -58,20 +86,18 @@ class NFeTransmitter:
     def _send(self, servico, xml_content, timeout=60):
         url = self.urls[servico]
         soap_xml = self._build_soap_envelope(servico, xml_content)
-        cert_path, key_path = self._get_cert_files()
 
         headers = {
             'Content-Type': 'application/soap+xml; charset=utf-8',
         }
 
         try:
-            response = requests.post(
+            session = self._create_session()
+            response = session.post(
                 url,
                 data=soap_xml.encode('utf-8'),
                 headers=headers,
-                cert=(cert_path, key_path),
                 timeout=timeout,
-                verify=True,
             )
             response.raise_for_status()
             return self._parse_response(response.content)
@@ -136,7 +162,6 @@ class NFeTransmitter:
 
     def cancelar(self, chave_acesso, protocolo, justificativa, cnpj):
         from .utils import CODIGOS_UF
-        from datetime import datetime
 
         cod_uf = CODIGOS_UF.get(self.uf, '35')
 
