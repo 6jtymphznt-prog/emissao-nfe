@@ -72,6 +72,7 @@ class NFeBuilder:
         etree.SubElement(ide, 'finNFe').text = destinatario.get('finalidade', '1')
         etree.SubElement(ide, 'indFinal').text = destinatario.get('consumidor_final', '0')
         etree.SubElement(ide, 'indPres').text = destinatario.get('presenca', '1')
+        etree.SubElement(ide, 'indIntermed').text = destinatario.get('intermediador', '0')
         etree.SubElement(ide, 'procEmi').text = '0'
         etree.SubElement(ide, 'verProc').text = 'NFe-Contingencia-1.0'
 
