@@ -70,12 +70,12 @@ class NFeSigner:
                 resp = http_requests.get(ca_urls[0], timeout=10)
                 resp.raise_for_status()
 
-                try:
-                    issuer_cert = x509.load_der_x509_certificate(resp.content)
-                except Exception:
-                    issuer_cert = x509.load_pem_x509_certificate(resp.content)
+                parsed_certs = self._parse_cert_response(resp.content)
+                if not parsed_certs:
+                    break
 
-                chain.append(issuer_cert)
+                chain.extend(parsed_certs)
+                issuer_cert = parsed_certs[0]
 
                 if issuer_cert.issuer == issuer_cert.subject:
                     break
@@ -84,6 +84,28 @@ class NFeSigner:
             except Exception:
                 break
         return chain
+
+    @staticmethod
+    def _parse_cert_response(data):
+        try:
+            return [x509.load_der_x509_certificate(data)]
+        except Exception:
+            pass
+        try:
+            return [x509.load_pem_x509_certificate(data)]
+        except Exception:
+            pass
+        try:
+            from cryptography.hazmat.primitives.serialization import pkcs7
+            return pkcs7.load_der_pkcs7_certificates(data)
+        except Exception:
+            pass
+        try:
+            from cryptography.hazmat.primitives.serialization import pkcs7
+            return pkcs7.load_pem_pkcs7_certificates(data)
+        except Exception:
+            pass
+        return []
 
     @property
     def chain_count(self):

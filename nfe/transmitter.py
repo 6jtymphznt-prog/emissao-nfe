@@ -21,17 +21,21 @@ WSDL_ACTIONS = {
 
 class SefazTLSAdapter(HTTPAdapter):
 
-    def __init__(self, cert_pem_path, key_pem_path, **kwargs):
+    def __init__(self, cert_pem_path, key_pem_path, verify_server=True, **kwargs):
         self.cert_pem_path = cert_pem_path
         self.key_pem_path = key_pem_path
+        self.verify_server = verify_server
         super().__init__(**kwargs)
 
     def init_poolmanager(self, *args, **kwargs):
-        ctx = create_urllib3_context()
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
         ctx.minimum_version = ssl.TLSVersion.TLSv1_2
-        ctx.maximum_version = ssl.TLSVersion.TLSv1_2
+        if not self.verify_server:
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+        else:
+            ctx.load_verify_locations(certifi.where())
         ctx.load_cert_chain(certfile=self.cert_pem_path, keyfile=self.key_pem_path)
-        ctx.load_verify_locations(certifi.where())
         kwargs['ssl_context'] = ctx
         super().init_poolmanager(*args, **kwargs)
 
@@ -60,7 +64,7 @@ class NFeTransmitter:
     def _create_session(self):
         cert_path, key_path = self._get_cert_files()
         session = requests.Session()
-        adapter = SefazTLSAdapter(cert_path, key_path)
+        adapter = SefazTLSAdapter(cert_path, key_path, verify_server=False)
         session.mount('https://', adapter)
         return session
 

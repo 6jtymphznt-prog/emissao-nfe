@@ -654,16 +654,15 @@ def diagnostico():
     ok, det, msg = _test_connection('TLS 1.2', factory_tls12)
     resultados.append({'teste': 'SEFAZ com cert (TLS 1.2)', 'detalhe': det, 'ok': ok, 'msg': msg})
 
-    # Teste B: TLS 1.2 + cert + sem verificacao do servidor
+    # Teste B: TLS 1.2 + cert + sem verificacao do servidor (proxy corporativo)
     def factory_tls12_noverify():
         import urllib3
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
         s = req.Session()
-        s.verify = False
-        s.mount('https://', SefazTLSAdapter(cert_pem, key_pem))
+        s.mount('https://', SefazTLSAdapter(cert_pem, key_pem, verify_server=False))
         return s
     ok, det, msg = _test_connection('TLS 1.2 sem verify', factory_tls12_noverify)
-    resultados.append({'teste': 'SEFAZ com cert (TLS 1.2, verify=False)', 'detalhe': det, 'ok': ok, 'msg': msg})
+    resultados.append({'teste': 'SEFAZ com cert (sem verify - proxy corp.)', 'detalhe': det, 'ok': ok, 'msg': msg})
 
     # Teste C: Sem forcar TLS (deixar Python negociar) + cert
     def factory_auto_tls():
