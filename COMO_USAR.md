@@ -13,19 +13,31 @@ preenche os dados e emite a nota.
 
 ### 1. Instalar o Python
 
-O programa precisa do Python (versao 3.9 ou superior) instalado.
+O programa precisa do Python instalado.
+
+**IMPORTANTE:** Use o **Python 3.12** (versao estavel). NAO use o Python 3.14
+(versao experimental) pois as bibliotecas ainda nao funcionam com ele.
 
 **Windows:**
-1. Acesse https://www.python.org/downloads/
-2. Clique em "Download Python 3.x.x"
+1. Acesse https://www.python.org/downloads/release/python-31210/
+2. Role ate o final da pagina e clique em **"Windows installer (64-bit)"**
 3. Execute o instalador
-4. **IMPORTANTE:** Marque a opcao "Add Python to PATH" antes de clicar em Install
+4. **IMPORTANTE:** Marque a opcao **"Add Python to PATH"** antes de clicar em Install
 5. Clique em "Install Now"
+
+**Como verificar a versao instalada:**
+Abra o Prompt de Comando e digite:
+```
+python --version
+```
+Deve aparecer algo como `Python 3.12.10`. Se aparecer `Python 3.14.x`,
+desinstale primeiro (Configuracoes > Aplicativos > Python 3.14 > Desinstalar)
+e instale o 3.12 conforme acima.
 
 **Mac:**
 1. Abra o Terminal
-2. Digite: `brew install python3` (se tiver Homebrew)
-3. Ou baixe de https://www.python.org/downloads/
+2. Digite: `brew install python@3.12` (se tiver Homebrew)
+3. Ou baixe de https://www.python.org/downloads/release/python-31210/
 
 ### 2. Baixar este projeto
 
@@ -261,6 +273,16 @@ No terminal onde ele esta rodando, pressione **Ctrl + C**.
 
 ## Problemas Comuns
 
+**Erro ao instalar: "Failed building wheel for lxml" / "Failed building wheel for Pillow"**
+- Voce provavelmente esta usando o **Python 3.14** (versao experimental).
+- Solucao: desinstale o Python 3.14 e instale o **Python 3.12**.
+  Veja o passo 1 da instalacao acima.
+- Para verificar sua versao, digite no Prompt de Comando: `python --version`
+
+**Erro ao instalar: "Microsoft Visual C++ 14.0 or greater is required"**
+- Mesmo problema: use o **Python 3.12** que ja tem pacotes prontos para Windows
+  e nao precisa compilar nada.
+
 **"Certificado digital nao encontrado"**
 - Verifique se o arquivo .pfx esta na pasta `certificados/`
 - Verifique se o nome do arquivo esta correto no `.env`
@@ -276,3 +298,8 @@ No terminal onde ele esta rodando, pressione **Ctrl + C**.
 **Pagina nao abre no navegador**
 - Verifique se o terminal mostra "Running on http://..."
 - Tente acessar http://127.0.0.1:5000 em vez de localhost
+
+**"python nao e reconhecido como comando interno"**
+- O Python nao foi adicionado ao PATH durante a instalacao.
+- Desinstale o Python, instale novamente e dessa vez marque a opcao
+  **"Add Python to PATH"** antes de clicar em Install.
