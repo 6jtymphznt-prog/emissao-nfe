@@ -35,8 +35,12 @@ class NFeSigner:
 
         self._private_key = private_key
         self._certificate = certificate
+        self._additional_certs = additional_certs or []
 
-        self._cert_pem = certificate.public_bytes(Encoding.PEM)
+        cert_pem = certificate.public_bytes(Encoding.PEM)
+        for ca_cert in self._additional_certs:
+            cert_pem += ca_cert.public_bytes(Encoding.PEM)
+        self._cert_pem = cert_pem
         self._key_pem = private_key.private_bytes(Encoding.PEM, PrivateFormat.PKCS8, NoEncryption())
 
     def sign_nfe(self, nfe_element):

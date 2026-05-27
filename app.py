@@ -476,9 +476,12 @@ def diagnostico():
         vencido = agora > certificate.not_valid_after_utc
         ainda_nao_valido = agora < certificate.not_valid_before_utc
 
+        qtd_cadeia = len(additional) if additional else 0
+        cert_info['qtd_cadeia'] = qtd_cadeia
+
         resultados.append({
             'teste': 'Senha do certificado',
-            'detalhe': 'Certificado aberto com sucesso',
+            'detalhe': f'Certificado aberto com sucesso ({qtd_cadeia} certificado(s) intermediario(s))',
             'ok': True,
             'msg': 'Senha correta',
         })
