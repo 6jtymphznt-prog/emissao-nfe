@@ -39,6 +39,11 @@ class SefazTLSAdapter(HTTPAdapter):
         kwargs['ssl_context'] = ctx
         super().init_poolmanager(*args, **kwargs)
 
+    def send(self, request, **kwargs):
+        if not self.verify_server:
+            kwargs['verify'] = False
+        return super().send(request, **kwargs)
+
 
 class NFeTransmitter:
 
