@@ -2,10 +2,13 @@ import base64
 import hashlib
 import tempfile
 import os
+import requests as http_requests
 from lxml import etree
+from cryptography import x509
 from cryptography.hazmat.primitives.serialization import pkcs12, Encoding, PrivateFormat, NoEncryption
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import hashes
+from cryptography.x509.oid import AuthorityInformationAccessOID
 
 NAMESPACE_DS = 'http://www.w3.org/2000/09/xmldsig#'
 C14N_ALG = 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315'
@@ -23,6 +26,7 @@ class NFeSigner:
         self._certificate = None
         self._cert_pem = None
         self._key_pem = None
+        self._chain_certs = []
         self._load_certificate()
 
     def _load_certificate(self):
@@ -35,13 +39,55 @@ class NFeSigner:
 
         self._private_key = private_key
         self._certificate = certificate
-        self._additional_certs = additional_certs or []
+
+        chain = list(additional_certs or [])
+        if not chain:
+            chain = self._fetch_intermediate_chain(certificate)
+        self._chain_certs = chain
 
         cert_pem = certificate.public_bytes(Encoding.PEM)
-        for ca_cert in self._additional_certs:
+        for ca_cert in self._chain_certs:
             cert_pem += ca_cert.public_bytes(Encoding.PEM)
         self._cert_pem = cert_pem
         self._key_pem = private_key.private_bytes(Encoding.PEM, PrivateFormat.PKCS8, NoEncryption())
+
+    def _fetch_intermediate_chain(self, cert):
+        chain = []
+        current = cert
+        for _ in range(5):
+            try:
+                aia = current.extensions.get_extension_for_oid(
+                    x509.oid.ExtensionOID.AUTHORITY_INFORMATION_ACCESS
+                )
+                ca_urls = [
+                    desc.access_location.value
+                    for desc in aia.value
+                    if desc.access_method == AuthorityInformationAccessOID.CA_ISSUERS
+                ]
+                if not ca_urls:
+                    break
+
+                resp = http_requests.get(ca_urls[0], timeout=10)
+                resp.raise_for_status()
+
+                try:
+                    issuer_cert = x509.load_der_x509_certificate(resp.content)
+                except Exception:
+                    issuer_cert = x509.load_pem_x509_certificate(resp.content)
+
+                chain.append(issuer_cert)
+
+                if issuer_cert.issuer == issuer_cert.subject:
+                    break
+
+                current = issuer_cert
+            except Exception:
+                break
+        return chain
+
+    @property
+    def chain_count(self):
+        return len(self._chain_certs)
 
     def sign_nfe(self, nfe_element):
         inf_nfe = nfe_element.find('{http://www.portalfiscal.inf.br/nfe}infNFe')

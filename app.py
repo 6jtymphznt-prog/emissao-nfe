@@ -476,12 +476,26 @@ def diagnostico():
         vencido = agora > certificate.not_valid_after_utc
         ainda_nao_valido = agora < certificate.not_valid_before_utc
 
-        qtd_cadeia = len(additional) if additional else 0
-        cert_info['qtd_cadeia'] = qtd_cadeia
+        qtd_cadeia_pfx = len(additional) if additional else 0
+
+        try:
+            signer_test = get_signer()
+            qtd_cadeia_total = signer_test.chain_count
+        except Exception:
+            qtd_cadeia_total = qtd_cadeia_pfx
+
+        cert_info['qtd_cadeia'] = qtd_cadeia_total
+
+        if qtd_cadeia_pfx > 0:
+            detalhe_cadeia = f'{qtd_cadeia_pfx} intermediario(s) no PFX'
+        elif qtd_cadeia_total > 0:
+            detalhe_cadeia = f'{qtd_cadeia_total} intermediario(s) baixado(s) automaticamente da internet'
+        else:
+            detalhe_cadeia = 'Nenhum intermediario encontrado (pode causar erro de conexao)'
 
         resultados.append({
             'teste': 'Senha do certificado',
-            'detalhe': f'Certificado aberto com sucesso ({qtd_cadeia} certificado(s) intermediario(s))',
+            'detalhe': detalhe_cadeia,
             'ok': True,
             'msg': 'Senha correta',
         })
