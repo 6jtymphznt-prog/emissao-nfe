@@ -333,8 +333,12 @@ class NFeBuilder:
     def _build_pag(self, parent, pagamento):
         pag = etree.SubElement(parent, 'pag')
         det_pag = etree.SubElement(pag, 'detPag')
-        etree.SubElement(det_pag, 'tPag').text = pagamento.get('forma', '01')
-        etree.SubElement(det_pag, 'vPag').text = self._fmt_valor(pagamento.get('valor', 0))
+        forma = pagamento.get('forma', '01')
+        etree.SubElement(det_pag, 'tPag').text = forma
+        if forma == '90':
+            etree.SubElement(det_pag, 'vPag').text = '0.00'
+        else:
+            etree.SubElement(det_pag, 'vPag').text = self._fmt_valor(pagamento.get('valor', 0))
 
     def to_xml_string(self, nfe_element):
         return etree.tostring(nfe_element, encoding='unicode', xml_declaration=False)
