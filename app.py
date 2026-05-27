@@ -8,6 +8,7 @@ from nfe.builder import NFeBuilder
 from nfe.signer import NFeSigner
 from nfe.transmitter import NFeTransmitter
 from nfe.danfe import DANFEGenerator
+from nfe.csv_parser import validar_csv, agrupar_por_nota, parsear_nota
 from nfe.utils import CODIGOS_UF, UF_POR_CODIGO
 
 app = Flask(__name__)
@@ -174,85 +175,15 @@ def emitir():
 
         info_adicionais = request.form.get('info_adicionais', '')
 
-        builder = NFeBuilder(Config.emitente(), Config.NFE_AMBIENTE, Config.NFE_SERIE)
-        nfe_xml = builder.build(numero, destinatario, produtos, transporte, pagamento, info_adicionais)
-        chave_acesso = builder.chave_acesso
-
-        os.makedirs(Config.XMLS_DIR, exist_ok=True)
-        xml_path = os.path.join(Config.XMLS_DIR, f'NFe_{chave_acesso}_sem_assinatura.xml')
-        with open(xml_path, 'wb') as f:
-            f.write(etree.tostring(nfe_xml, pretty_print=True, xml_declaration=True, encoding='UTF-8'))
-
-        signer = get_signer()
-        nfe_signed = signer.sign_nfe(nfe_xml)
-
-        xml_signed_path = os.path.join(Config.XMLS_DIR, f'NFe_{chave_acesso}_assinada.xml')
-        with open(xml_signed_path, 'wb') as f:
-            f.write(etree.tostring(nfe_signed, pretty_print=True, xml_declaration=True, encoding='UTF-8'))
-
-        transmitter = get_transmitter(signer)
-        resultado = transmitter.autorizar(nfe_signed)
-
-        protocolo = resultado.get('nProt', '')
-        status = resultado.get('cStat', '')
-        motivo = resultado.get('xMotivo', '')
-
-        if status == '100':
-            nfe_proc_path = os.path.join(Config.XMLS_DIR, f'NFe_{chave_acesso}_autorizada.xml')
-            with open(nfe_proc_path, 'wb') as f:
-                f.write(etree.tostring(nfe_signed, pretty_print=True, xml_declaration=True, encoding='UTF-8'))
-
-        v_nf = sum(float(p['valor_total']) for p in produtos)
-
-        dados_danfe = {
-            'emitente': Config.emitente(),
-            'destinatario': destinatario,
-            'ide': {
-                'numero': numero,
-                'serie': Config.NFE_SERIE,
-                'tipo_operacao': destinatario.get('tipo_operacao', '1'),
-                'data_emissao': datetime.now().strftime('%d/%m/%Y'),
-            },
-            'produtos': produtos,
-            'totais': {
-                'v_bc': sum(float(p.get('icms_base', p['valor_total'])) for p in produtos),
-                'v_icms': sum(float(p.get('icms_valor', 0)) for p in produtos),
-                'v_prod': v_nf,
-                'v_frete': 0,
-                'v_desc': 0,
-                'v_outros': 0,
-                'v_pis': sum(float(p.get('pis_valor', 0)) for p in produtos),
-                'v_cofins': sum(float(p.get('cofins_valor', 0)) for p in produtos),
-                'v_nf': v_nf,
-            },
-            'transporte': transporte,
-            'info_adicionais': info_adicionais,
-        }
-
-        danfe_path = ''
-        try:
-            danfe = DANFEGenerator(Config.DANFES_DIR)
-            danfe_path = danfe.gerar(dados_danfe, chave_acesso, protocolo)
-        except Exception as e:
-            flash(f'DANFE nao gerado: {str(e)}', 'warning')
-
-        registro = {
-            'numero': numero,
-            'serie': Config.NFE_SERIE,
-            'chave_acesso': chave_acesso,
-            'protocolo': protocolo,
-            'status': status,
-            'motivo': motivo,
-            'data': datetime.now().strftime('%d/%m/%Y %H:%M:%S'),
-            'destinatario': destinatario['razao_social'],
-            'valor': v_nf,
-            'danfe_path': danfe_path,
-        }
-
-        historico = carregar_historico()
-        historico.append(registro)
-        salvar_historico(historico)
+        registro = emitir_nota(numero, destinatario, produtos, transporte, pagamento, info_adicionais)
         salvar_proximo_numero(numero + 1)
+
+        resultado = {
+            'cStat': registro['status'],
+            'xMotivo': registro['motivo'],
+            'nProt': registro['protocolo'],
+            'chNFe': registro['chave_acesso'],
+        }
 
         return render_template('resultado.html',
                                titulo='Resultado da Emissao',
@@ -266,6 +197,186 @@ def emitir():
     except Exception as e:
         flash(f'Erro na emissao: {str(e)}', 'danger')
         return redirect(url_for('emitir'))
+
+
+def emitir_nota(numero, destinatario, produtos, transporte, pagamento, info_adicionais=''):
+    builder = NFeBuilder(Config.emitente(), Config.NFE_AMBIENTE, Config.NFE_SERIE)
+    nfe_xml = builder.build(numero, destinatario, produtos, transporte, pagamento, info_adicionais)
+    chave_acesso = builder.chave_acesso
+
+    os.makedirs(Config.XMLS_DIR, exist_ok=True)
+    xml_path = os.path.join(Config.XMLS_DIR, f'NFe_{chave_acesso}_sem_assinatura.xml')
+    with open(xml_path, 'wb') as f:
+        f.write(etree.tostring(nfe_xml, pretty_print=True, xml_declaration=True, encoding='UTF-8'))
+
+    signer = get_signer()
+    nfe_signed = signer.sign_nfe(nfe_xml)
+
+    xml_signed_path = os.path.join(Config.XMLS_DIR, f'NFe_{chave_acesso}_assinada.xml')
+    with open(xml_signed_path, 'wb') as f:
+        f.write(etree.tostring(nfe_signed, pretty_print=True, xml_declaration=True, encoding='UTF-8'))
+
+    transmitter = get_transmitter(signer)
+    resultado = transmitter.autorizar(nfe_signed)
+
+    protocolo = resultado.get('nProt', '')
+    status = resultado.get('cStat', '')
+    motivo = resultado.get('xMotivo', '')
+
+    if status == '100':
+        nfe_proc_path = os.path.join(Config.XMLS_DIR, f'NFe_{chave_acesso}_autorizada.xml')
+        with open(nfe_proc_path, 'wb') as f:
+            f.write(etree.tostring(nfe_signed, pretty_print=True, xml_declaration=True, encoding='UTF-8'))
+
+    v_nf = sum(float(p['valor_total']) for p in produtos)
+
+    dados_danfe = {
+        'emitente': Config.emitente(),
+        'destinatario': destinatario,
+        'ide': {
+            'numero': numero,
+            'serie': Config.NFE_SERIE,
+            'tipo_operacao': destinatario.get('tipo_operacao', '1'),
+            'data_emissao': datetime.now().strftime('%d/%m/%Y'),
+        },
+        'produtos': produtos,
+        'totais': {
+            'v_bc': sum(float(p.get('icms_base', p['valor_total'])) for p in produtos),
+            'v_icms': sum(float(p.get('icms_valor', 0)) for p in produtos),
+            'v_prod': v_nf,
+            'v_frete': 0,
+            'v_desc': 0,
+            'v_outros': 0,
+            'v_pis': sum(float(p.get('pis_valor', 0)) for p in produtos),
+            'v_cofins': sum(float(p.get('cofins_valor', 0)) for p in produtos),
+            'v_nf': v_nf,
+        },
+        'transporte': transporte,
+        'info_adicionais': info_adicionais,
+    }
+
+    danfe_path = ''
+    try:
+        danfe = DANFEGenerator(Config.DANFES_DIR)
+        danfe_path = danfe.gerar(dados_danfe, chave_acesso, protocolo)
+    except Exception:
+        pass
+
+    registro = {
+        'numero': numero,
+        'serie': Config.NFE_SERIE,
+        'chave_acesso': chave_acesso,
+        'protocolo': protocolo,
+        'status': status,
+        'motivo': motivo,
+        'data': datetime.now().strftime('%d/%m/%Y %H:%M:%S'),
+        'destinatario': destinatario['razao_social'],
+        'valor': v_nf,
+        'danfe_path': danfe_path,
+    }
+
+    historico = carregar_historico()
+    historico.append(registro)
+    salvar_historico(historico)
+
+    return registro
+
+
+@app.route('/importar-csv', methods=['GET', 'POST'])
+def importar_csv():
+    if request.method == 'GET':
+        return render_template('importar_csv.html', config=Config)
+
+    arquivo = request.files.get('arquivo_csv')
+    if not arquivo or not arquivo.filename:
+        flash('Selecione um arquivo CSV', 'danger')
+        return redirect(url_for('importar_csv'))
+
+    try:
+        conteudo = arquivo.read().decode('utf-8-sig')
+    except UnicodeDecodeError:
+        try:
+            arquivo.seek(0)
+            conteudo = arquivo.read().decode('latin-1')
+        except Exception:
+            flash('Nao foi possivel ler o arquivo. Use codificacao UTF-8.', 'danger')
+            return redirect(url_for('importar_csv'))
+
+    linhas, erro = validar_csv(conteudo)
+    if erro:
+        flash(f'Erro no CSV: {erro}', 'danger')
+        return redirect(url_for('importar_csv'))
+
+    notas_agrupadas = agrupar_por_nota(linhas)
+
+    notas_parseadas = {}
+    for num, linhas_nota in sorted(notas_agrupadas.items(), key=lambda x: int(x[0])):
+        try:
+            notas_parseadas[num] = parsear_nota(num, linhas_nota)
+        except Exception as e:
+            flash(f'Erro ao processar nota {num}: {str(e)}', 'danger')
+            return redirect(url_for('importar_csv'))
+
+    acao = request.form.get('acao', 'validar')
+
+    if acao == 'validar':
+        preview = []
+        for num, nota in notas_parseadas.items():
+            preview.append({
+                'numero': nota['numero'],
+                'destinatario': nota['destinatario']['razao_social'],
+                'cnpj_cpf': nota['destinatario']['cnpj_cpf'],
+                'qtd_produtos': len(nota['produtos']),
+                'valor_total': sum(p['valor_total'] for p in nota['produtos']),
+            })
+        flash(f'CSV validado com sucesso! {len(preview)} nota(s) pronta(s) para emissao.', 'success')
+        return render_template('importar_csv.html', config=Config, preview=preview)
+
+    resultados = []
+    maior_numero = 0
+    for num, nota in notas_parseadas.items():
+        try:
+            registro = emitir_nota(
+                nota['numero'],
+                nota['destinatario'],
+                nota['produtos'],
+                nota['transporte'],
+                nota['pagamento'],
+                nota['info_adicionais'],
+            )
+            resultados.append(registro)
+            if nota['numero'] > maior_numero:
+                maior_numero = nota['numero']
+        except Exception as e:
+            resultados.append({
+                'numero': nota['numero'],
+                'destinatario': nota['destinatario']['razao_social'],
+                'valor': sum(p['valor_total'] for p in nota['produtos']),
+                'status': 'ERRO',
+                'motivo': str(e),
+                'protocolo': '',
+                'chave_acesso': '',
+            })
+
+    if maior_numero > 0:
+        salvar_proximo_numero(maior_numero + 1)
+
+    autorizadas = sum(1 for r in resultados if r.get('status') == '100')
+    total = len(resultados)
+    if autorizadas == total:
+        flash(f'Todas as {total} nota(s) foram autorizadas com sucesso!', 'success')
+    elif autorizadas > 0:
+        flash(f'{autorizadas} de {total} nota(s) autorizada(s). Verifique os erros abaixo.', 'warning')
+    else:
+        flash(f'Nenhuma nota foi autorizada. Verifique os erros abaixo.', 'danger')
+
+    return render_template('importar_csv.html', config=Config, resultados=resultados)
+
+
+@app.route('/modelo-csv')
+def download_modelo_csv():
+    filepath = os.path.join(os.path.dirname(__file__), 'modelo_nfe.csv')
+    return send_file(filepath, as_attachment=True, download_name='modelo_nfe.csv')
 
 
 @app.route('/consultar', methods=['GET', 'POST'])

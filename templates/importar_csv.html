@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+{% block title %}Importar CSV{% endblock %}
+
+{% block content %}
+<h3 class="mb-4"><i class="bi bi-file-earmark-spreadsheet"></i> Emitir NFe via CSV</h3>
+
+<!-- Instrucoes -->
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="bi bi-info-circle"></i> Como funciona
+    </div>
+    <div class="card-body">
+        <ol>
+            <li>Baixe o <strong>modelo CSV</strong> clicando no botao abaixo</li>
+            <li>Abra o arquivo no <strong>Excel</strong> ou <strong>Google Planilhas</strong> (Sheets)</li>
+            <li>Preencha os dados da(s) nota(s) - cada linha e um <strong>produto</strong></li>
+            <li>Se a nota tiver mais de um produto, repita os dados do destinatario nas linhas seguintes com o <strong>mesmo numero</strong></li>
+            <li>Salve como CSV (separado por ponto e virgula <code>;</code>)</li>
+            <li>Faca o upload do arquivo aqui</li>
+        </ol>
+
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('download_modelo_csv') }}" class="btn btn-outline-success">
+                <i class="bi bi-download"></i> Baixar Modelo CSV
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Referencia de colunas -->
+<div class="card mb-4">
+    <div class="card-header" role="button" data-bs-toggle="collapse" data-bs-target="#colunasRef">
+        <i class="bi bi-table"></i> Referencia de Colunas (clique para expandir)
+    </div>
+    <div id="colunasRef" class="collapse">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>Coluna</th>
+                            <th>Obrigatoria</th>
+                            <th>Descricao</th>
+                            <th>Exemplo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="table-primary"><td colspan="4"><strong>IDENTIFICACAO DA NOTA</strong></td></tr>
+                        <tr><td><code>numero</code></td><td>Sim</td><td>Numero da NFe</td><td>1</td></tr>
+                        <tr><td><code>natureza_operacao</code></td><td>Nao</td><td>Natureza (padrao: VENDA DE MERCADORIA)</td><td>VENDA DE MERCADORIA</td></tr>
+                        <tr><td><code>tipo_operacao</code></td><td>Nao</td><td>0=Entrada, 1=Saida (padrao: 1)</td><td>1</td></tr>
+                        <tr><td><code>finalidade</code></td><td>Nao</td><td>1=Normal, 2=Complementar, 3=Ajuste, 4=Devolucao</td><td>1</td></tr>
+                        <tr><td><code>consumidor_final</code></td><td>Nao</td><td>0=Nao, 1=Sim</td><td>0</td></tr>
+                        <tr><td><code>presenca</code></td><td>Nao</td><td>0=N/A, 1=Presencial, 2=Internet, 9=Outros</td><td>1</td></tr>
+
+                        <tr class="table-primary"><td colspan="4"><strong>DESTINATARIO</strong></td></tr>
+                        <tr><td><code>dest_cnpj_cpf</code></td><td>Sim</td><td>CNPJ (14 dig) ou CPF (11 dig), so numeros</td><td>00000000000200</td></tr>
+                        <tr><td><code>dest_razao_social</code></td><td>Sim</td><td>Razao Social ou Nome</td><td>CLIENTE LTDA</td></tr>
+                        <tr><td><code>dest_ie</code></td><td>Nao</td><td>Inscricao Estadual</td><td>123456789</td></tr>
+                        <tr><td><code>dest_ind_ie</code></td><td>Nao</td><td>1=Contribuinte, 2=Isento, 9=Nao Contrib.</td><td>9</td></tr>
+                        <tr><td><code>dest_email</code></td><td>Nao</td><td>Email do destinatario</td><td>email@email.com</td></tr>
+                        <tr><td><code>dest_logradouro</code></td><td>Sim</td><td>Rua/Avenida</td><td>Rua das Flores</td></tr>
+                        <tr><td><code>dest_numero</code></td><td>Sim</td><td>Numero do endereco</td><td>100</td></tr>
+                        <tr><td><code>dest_complemento</code></td><td>Nao</td><td>Complemento</td><td>Sala 2</td></tr>
+                        <tr><td><code>dest_bairro</code></td><td>Sim</td><td>Bairro</td><td>Centro</td></tr>
+                        <tr><td><code>dest_cod_municipio</code></td><td>Sim</td><td>Codigo IBGE do municipio (7 digitos)</td><td>3550308</td></tr>
+                        <tr><td><code>dest_municipio</code></td><td>Sim</td><td>Nome do municipio</td><td>SAO PAULO</td></tr>
+                        <tr><td><code>dest_uf</code></td><td>Sim</td><td>Sigla do estado</td><td>SP</td></tr>
+                        <tr><td><code>dest_cep</code></td><td>Nao</td><td>CEP (so numeros)</td><td>01001000</td></tr>
+                        <tr><td><code>dest_telefone</code></td><td>Nao</td><td>Telefone</td><td>11999998888</td></tr>
+
+                        <tr class="table-primary"><td colspan="4"><strong>TRANSPORTE</strong></td></tr>
+                        <tr><td><code>mod_frete</code></td><td>Nao</td><td>0=Emitente, 1=Dest., 9=Sem frete (padrao: 9)</td><td>9</td></tr>
+                        <tr><td><code>transp_cnpj</code></td><td>Nao</td><td>CNPJ da transportadora</td><td></td></tr>
+                        <tr><td><code>transp_nome</code></td><td>Nao</td><td>Nome da transportadora</td><td></td></tr>
+                        <tr><td><code>transp_uf</code></td><td>Nao</td><td>UF da transportadora</td><td></td></tr>
+                        <tr><td><code>volumes_qtd</code></td><td>Nao</td><td>Quantidade de volumes</td><td>1</td></tr>
+                        <tr><td><code>volumes_especie</code></td><td>Nao</td><td>Especie dos volumes</td><td>CAIXA</td></tr>
+                        <tr><td><code>volumes_peso_liq</code></td><td>Nao</td><td>Peso liquido em kg</td><td>5.500</td></tr>
+                        <tr><td><code>volumes_peso_bruto</code></td><td>Nao</td><td>Peso bruto em kg</td><td>6.000</td></tr>
+
+                        <tr class="table-primary"><td colspan="4"><strong>PAGAMENTO</strong></td></tr>
+                        <tr><td><code>forma_pagamento</code></td><td>Nao</td><td>01=Dinheiro, 03=Credito, 04=Debito, 15=Boleto, 17=PIX</td><td>01</td></tr>
+                        <tr><td><code>info_adicionais</code></td><td>Nao</td><td>Informacoes complementares</td><td></td></tr>
+
+                        <tr class="table-primary"><td colspan="4"><strong>PRODUTO (uma linha por produto)</strong></td></tr>
+                        <tr><td><code>prod_codigo</code></td><td>Sim</td><td>Codigo do produto</td><td>001</td></tr>
+                        <tr><td><code>prod_descricao</code></td><td>Sim</td><td>Descricao do produto</td><td>CAMISETA ALGODAO</td></tr>
+                        <tr><td><code>prod_ncm</code></td><td>Sim</td><td>Codigo NCM (8 digitos)</td><td>61091000</td></tr>
+                        <tr><td><code>prod_cfop</code></td><td>Sim</td><td>CFOP (4 digitos)</td><td>5102</td></tr>
+                        <tr><td><code>prod_unidade</code></td><td>Nao</td><td>Unidade de medida (padrao: UN)</td><td>UN</td></tr>
+                        <tr><td><code>prod_ean</code></td><td>Nao</td><td>Codigo de barras EAN (padrao: SEM GTIN)</td><td>SEM GTIN</td></tr>
+                        <tr><td><code>prod_quantidade</code></td><td>Sim</td><td>Quantidade</td><td>2</td></tr>
+                        <tr><td><code>prod_valor_unitario</code></td><td>Sim</td><td>Valor unitario (usar ponto decimal)</td><td>150.00</td></tr>
+                        <tr><td><code>prod_icms_orig</code></td><td>Nao</td><td>Origem: 0=Nacional (padrao: 0)</td><td>0</td></tr>
+                        <tr><td><code>prod_icms_cst</code></td><td>Nao</td><td>CST ICMS: 00, 10, 20, 40, 41, 50, 60, 90</td><td>00</td></tr>
+                        <tr><td><code>prod_icms_csosn</code></td><td>Nao</td><td>CSOSN (se Simples Nacional): 101, 102, 500...</td><td></td></tr>
+                        <tr><td><code>prod_icms_aliquota</code></td><td>Nao</td><td>Aliquota ICMS em % (padrao: 0)</td><td>18</td></tr>
+                        <tr><td><code>prod_cest</code></td><td>Nao</td><td>Codigo CEST (se aplicavel)</td><td></td></tr>
+                        <tr><td><code>prod_pis_cst</code></td><td>Nao</td><td>CST PIS (padrao: 07=Isenta)</td><td>07</td></tr>
+                        <tr><td><code>prod_pis_aliquota</code></td><td>Nao</td><td>Aliquota PIS em %</td><td>0</td></tr>
+                        <tr><td><code>prod_cofins_cst</code></td><td>Nao</td><td>CST COFINS (padrao: 07=Isenta)</td><td>07</td></tr>
+                        <tr><td><code>prod_cofins_aliquota</code></td><td>Nao</td><td>Aliquota COFINS em %</td><td>0</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload -->
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="bi bi-upload"></i> Enviar Arquivo CSV
+    </div>
+    <div class="card-body">
+        <form method="POST" enctype="multipart/form-data" id="formCSV">
+            <div class="row align-items-end">
+                <div class="col-md-8">
+                    <label class="form-label">Selecione o arquivo CSV</label>
+                    <input type="file" class="form-control" name="arquivo_csv" accept=".csv,.txt" required>
+                    <div class="form-text">Arquivo CSV separado por ponto e virgula (;). Codificacao UTF-8.</div>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" name="acao" value="validar" class="btn btn-warning w-100 mb-1">
+                        <i class="bi bi-check-circle"></i> Apenas Validar
+                    </button>
+                    <button type="submit" name="acao" value="emitir" class="btn btn-primary w-100" id="btnEmitir">
+                        <i class="bi bi-send"></i> Validar e Emitir
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Resultado da validacao -->
+{% if preview %}
+<div class="card mb-4">
+    <div class="card-header bg-success text-white">
+        <i class="bi bi-check-circle"></i> CSV Validado - {{ preview|length }} nota(s) encontrada(s)
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-striped mb-0">
+                <thead>
+                    <tr>
+                        <th>Numero</th>
+                        <th>Destinatario</th>
+                        <th>CNPJ/CPF</th>
+                        <th>Qtd Produtos</th>
+                        <th>Valor Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for nota in preview %}
+                    <tr>
+                        <td>{{ nota.numero }}</td>
+                        <td>{{ nota.destinatario }}</td>
+                        <td>{{ nota.cnpj_cpf }}</td>
+                        <td>{{ nota.qtd_produtos }}</td>
+                        <td>R$ {{ nota.valor_total | fmt_valor }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Resultados da emissao -->
+{% if resultados %}
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="bi bi-clipboard-check"></i> Resultado da Emissao em Lote
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-striped mb-0">
+                <thead>
+                    <tr>
+                        <th>Numero</th>
+                        <th>Destinatario</th>
+                        <th>Valor</th>
+                        <th>Status</th>
+                        <th>Motivo</th>
+                        <th>Protocolo</th>
+                        <th>Acoes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in resultados %}
+                    <tr>
+                        <td>{{ r.numero }}</td>
+                        <td>{{ r.destinatario }}</td>
+                        <td>R$ {{ r.valor | fmt_valor }}</td>
+                        <td>
+                            {% if r.status == '100' %}
+                                <span class="badge bg-success">Autorizada</span>
+                            {% elif r.status == 'ERRO' %}
+                                <span class="badge bg-danger">Erro</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">{{ r.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td><small>{{ r.motivo }}</small></td>
+                        <td><small>{{ r.protocolo }}</small></td>
+                        <td>
+                            {% if r.chave_acesso %}
+                                <a href="{{ url_for('download_danfe', chave=r.chave_acesso) }}" class="btn btn-sm btn-outline-primary" title="DANFE">
+                                    <i class="bi bi-file-pdf"></i>
+                                </a>
+                                <a href="{{ url_for('download_xml', chave=r.chave_acesso) }}" class="btn btn-sm btn-outline-secondary" title="XML">
+                                    <i class="bi bi-file-code"></i>
+                                </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<a href="{{ url_for('index') }}" class="btn btn-secondary mb-4">
+    <i class="bi bi-arrow-left"></i> Voltar
+</a>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('formCSV').addEventListener('submit', function(e) {
+    if (e.submitter && e.submitter.value === 'emitir') {
+        if (!confirm('Confirma a emissao das notas? Esta acao ira transmitir para a SEFAZ.')) {
+            e.preventDefault();
+        }
+    }
+});
+</script>
+{% endblock %}

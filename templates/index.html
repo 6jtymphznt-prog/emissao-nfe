@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="row mb-4">
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="card text-center">
             <div class="card-body">
                 <h5 class="card-title"><i class="bi bi-plus-circle"></i></h5>
@@ -12,7 +12,16 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-file-earmark-spreadsheet"></i></h5>
+                <p class="card-text">Emitir NFe via CSV</p>
+                <a href="{{ url_for('importar_csv') }}" class="btn btn-success">Importar CSV</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
         <div class="card text-center">
             <div class="card-body">
                 <h5 class="card-title"><i class="bi bi-search"></i></h5>
@@ -21,7 +30,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="card text-center">
             <div class="card-body">
                 <h5 class="card-title"><i class="bi bi-wifi"></i></h5>
