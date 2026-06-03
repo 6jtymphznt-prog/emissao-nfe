@@ -340,6 +340,18 @@ def download_modelo_csv():
     return send_file(filepath, as_attachment=True, download_name='modelo_nfe.csv')
 
 
+@app.route('/guia-campos')
+def download_guia_campos():
+    filepath = os.path.join(os.path.dirname(__file__), 'CAMPOS_CSV.md')
+    return send_file(filepath, as_attachment=True, download_name='GUIA_CAMPOS_CSV.md')
+
+
+@app.route('/referencia-campos-csv')
+def download_referencia_csv():
+    filepath = os.path.join(os.path.dirname(__file__), 'REFERENCIA_CAMPOS_CSV.csv')
+    return send_file(filepath, as_attachment=True, download_name='REFERENCIA_CAMPOS_CSV.csv')
+
+
 @app.route('/xml/<chave>')
 def download_xml(chave):
     filepath = os.path.join(Config.XMLS_DIR, f'NFe_{chave}.xml')

@@ -1,0 +1,64 @@
+﻿Campo;Secao;Obrigatorio;Descricao;Exemplo
+numero;IDENTIFICACAO;Sim;Numero da NFe. Notas com mesmo numero sao agrupadas;1
+ambiente;IDENTIFICACAO;Nao;1=Producao (real), 2=Homologacao (teste). Padrao: 1;1
+natureza_operacao;IDENTIFICACAO;Nao;Texto descritivo da operacao. Padrao: VENDA DE MERCADORIA;VENDA DE MERCADORIA
+tipo_operacao;IDENTIFICACAO;Nao;0=Entrada, 1=Saida. Padrao: 1;1
+finalidade;IDENTIFICACAO;Nao;1=Normal, 2=Complementar, 3=Ajuste, 4=Devolucao;1
+consumidor_final;IDENTIFICACAO;Nao;0=Nao, 1=Sim;0
+presenca;IDENTIFICACAO;Nao;0=N/A, 1=Presencial, 2=Internet, 9=Outros;1
+emit_cnpj;EMITENTE (FILIAL);Nao;CNPJ da filial (14 digitos). Vazio = usa o .env;12345678000299
+emit_razao_social;EMITENTE (FILIAL);Nao;Razao social da filial;FILIAL SP LTDA
+emit_nome_fantasia;EMITENTE (FILIAL);Nao;Nome fantasia;FILIAL SP
+emit_ie;EMITENTE (FILIAL);Nao;Inscricao Estadual;123456789
+emit_crt;EMITENTE (FILIAL);Nao;1=Simples Nacional, 2=Simples excesso, 3=Normal. Padrao: 3;3
+emit_logradouro;EMITENTE (FILIAL);Nao;Rua/Avenida da filial;Rua da Filial
+emit_numero;EMITENTE (FILIAL);Nao;Numero do endereco;200
+emit_complemento;EMITENTE (FILIAL);Nao;Complemento;Sala 1
+emit_bairro;EMITENTE (FILIAL);Nao;Bairro;Centro
+emit_cod_municipio;EMITENTE (FILIAL);Nao;Codigo IBGE do municipio (7 digitos);3550308
+emit_municipio;EMITENTE (FILIAL);Nao;Nome do municipio;SAO PAULO
+emit_uf;EMITENTE (FILIAL);Nao;UF;SP
+emit_cep;EMITENTE (FILIAL);Nao;CEP (8 digitos, sem traco);01001000
+emit_telefone;EMITENTE (FILIAL);Nao;Telefone (DDD + numero);11999999999
+dest_cnpj_cpf;DESTINATARIO;Sim;CNPJ (14 digitos) ou CPF (11 digitos);12345678000199
+dest_razao_social;DESTINATARIO;Sim;Razao social ou nome completo;CLIENTE ABC LTDA
+dest_ie;DESTINATARIO;Nao;Inscricao Estadual;123456789
+dest_ind_ie;DESTINATARIO;Nao;1=Contribuinte, 2=Isento, 9=Nao Contribuinte. Padrao: 9;9
+dest_email;DESTINATARIO;Nao;Email do destinatario;cliente@email.com
+dest_logradouro;DESTINATARIO;Sim;Rua/Avenida;Rua das Flores
+dest_numero;DESTINATARIO;Sim;Numero do endereco;100
+dest_complemento;DESTINATARIO;Nao;Complemento;Apto 5
+dest_bairro;DESTINATARIO;Sim;Bairro;Centro
+dest_cod_municipio;DESTINATARIO;Sim;Codigo IBGE do municipio (7 digitos);3304557
+dest_municipio;DESTINATARIO;Sim;Nome do municipio;RIO DE JANEIRO
+dest_uf;DESTINATARIO;Sim;UF;RJ
+dest_cep;DESTINATARIO;Nao;CEP (8 digitos, sem traco);20040020
+dest_telefone;DESTINATARIO;Nao;Telefone;21999998888
+mod_frete;TRANSPORTE;Nao;0=Emitente, 1=Destinatario, 2=Terceiros, 9=Sem frete. Padrao: 9;9
+transp_cnpj;TRANSPORTE;Nao;CNPJ da transportadora;12345678000199
+transp_nome;TRANSPORTE;Nao;Nome da transportadora;TRANSPORTADORA XYZ
+transp_uf;TRANSPORTE;Nao;UF da transportadora;SP
+volumes_qtd;TRANSPORTE;Nao;Quantidade de volumes;1
+volumes_especie;TRANSPORTE;Nao;Especie dos volumes;CAIXA
+volumes_peso_liq;TRANSPORTE;Nao;Peso liquido em kg (use ponto decimal);5.500
+volumes_peso_bruto;TRANSPORTE;Nao;Peso bruto em kg (use ponto decimal);6.000
+forma_pagamento;PAGAMENTO;Nao;01=Dinheiro, 03=Credito, 04=Debito, 15=Boleto, 17=PIX, 90=Sem Pagamento;01
+valor_pagamento;PAGAMENTO;Nao;Valor do pagamento. Vazio=total dos produtos. Se forma=90, automaticamente 0;620.50
+info_adicionais;PAGAMENTO;Nao;Texto livre com informacoes complementares;Pedido n. 12345
+prod_codigo;PRODUTO;Sim;Codigo interno do produto;001
+prod_descricao;PRODUTO;Sim;Descricao do produto;CAMISETA ALGODAO TAM M
+prod_ncm;PRODUTO;Sim;Codigo NCM (8 digitos, sem pontos);61091000
+prod_cfop;PRODUTO;Sim;CFOP (4 digitos). 5102=venda mesmo estado, 6102=venda outro estado, 6910=doacao outro estado;5102
+prod_unidade;PRODUTO;Nao;Unidade comercial. Padrao: UN;UN
+prod_ean;PRODUTO;Nao;Codigo de barras EAN/GTIN. Padrao: SEM GTIN;SEM GTIN
+prod_quantidade;PRODUTO;Sim;Quantidade (use ponto decimal);2
+prod_valor_unitario;PRODUTO;Sim;Valor unitario em reais (use ponto decimal);150.00
+prod_icms_orig;PRODUTO;Nao;Origem da mercadoria. 0=Nacional. Padrao: 0;0
+prod_icms_cst;PRODUTO;Nao;CST ICMS (regime normal). 00=Trib integral, 40=Isenta, 41=Nao trib. Padrao: 00;00
+prod_icms_csosn;PRODUTO;Nao;CSOSN (apenas Simples Nacional). Ex: 102=Trib sem credito, 500=ICMS por ST;102
+prod_icms_aliquota;PRODUTO;Nao;Aliquota ICMS em %;18
+prod_cest;PRODUTO;Nao;Codigo CEST (se aplicavel a ST);
+prod_pis_cst;PRODUTO;Nao;CST PIS. 07=Isenta. Padrao: 07;07
+prod_pis_aliquota;PRODUTO;Nao;Aliquota PIS em %;0
+prod_cofins_cst;PRODUTO;Nao;CST COFINS. 07=Isenta. Padrao: 07;07
+prod_cofins_aliquota;PRODUTO;Nao;Aliquota COFINS em %;0

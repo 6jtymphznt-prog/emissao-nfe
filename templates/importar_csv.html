@@ -19,9 +19,15 @@
             <li>Faca o upload do arquivo aqui</li>
         </ol>
 
-        <div class="d-flex gap-2">
-            <a href="{{ url_for('download_modelo_csv') }}" class="btn btn-outline-success">
-                <i class="bi bi-download"></i> Baixar Modelo CSV
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{{ url_for('download_modelo_csv') }}" class="btn btn-outline-primary">
+                <i class="bi bi-file-earmark-arrow-down"></i> Baixar Modelo CSV
+            </a>
+            <a href="{{ url_for('download_referencia_csv') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-table"></i> Baixar Referencia em CSV (Excel)
+            </a>
+            <a href="{{ url_for('download_guia_campos') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-book"></i> Baixar Guia Detalhado (.md)
             </a>
         </div>
     </div>
