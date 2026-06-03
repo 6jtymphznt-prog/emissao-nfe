@@ -6,6 +6,32 @@
 
 <form method="POST" id="formNFe">
 
+    <!-- Ambiente -->
+    <div class="form-section">
+        <h5><i class="bi bi-toggle2-on"></i> Ambiente de emissao</h5>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="ambiente" id="amb_prod" value="1" checked>
+                    <label class="form-check-label" for="amb_prod">
+                        <strong>Producao</strong> <small class="text-muted">(nota real, com valor fiscal)</small>
+                    </label>
+                </div>
+                <div class="form-check form-check-inline ms-3">
+                    <input class="form-check-input" type="radio" name="ambiente" id="amb_homo" value="2">
+                    <label class="form-check-label" for="amb_homo">
+                        <strong>Homologacao</strong> <small class="text-muted">(testes, sem valor fiscal)</small>
+                    </label>
+                </div>
+                <div class="form-text">
+                    <i class="bi bi-info-circle"></i>
+                    Em homologacao, a SEFAZ exige que o nome do destinatario seja substituido por
+                    "NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL" no XML.
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Identificacao -->
     <div class="form-section">
         <h5><i class="bi bi-card-heading"></i> Identificacao</h5>

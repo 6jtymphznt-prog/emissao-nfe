@@ -43,8 +43,10 @@ def salvar_proximo_numero(num):
         json.dump({'proximo': num}, f)
 
 
-def gerar_nfe_xml(numero, destinatario, produtos, transporte, pagamento, info_adicionais=''):
-    builder = NFeBuilder(Config.emitente(), ambiente='1', serie=Config.NFE_SERIE)
+def gerar_nfe_xml(numero, destinatario, produtos, transporte, pagamento,
+                  info_adicionais='', emitente=None, ambiente='1'):
+    emit = emitente or Config.emitente()
+    builder = NFeBuilder(emit, ambiente=ambiente, serie=Config.NFE_SERIE)
     nfe_xml = builder.build(numero, destinatario, produtos, transporte, pagamento, info_adicionais)
     chave_acesso = builder.chave_acesso
 
@@ -56,7 +58,7 @@ def gerar_nfe_xml(numero, destinatario, produtos, transporte, pagamento, info_ad
     v_nf = sum(float(p['valor_total']) for p in produtos)
 
     dados_danfe = {
-        'emitente': Config.emitente(),
+        'emitente': emit,
         'destinatario': destinatario,
         'ide': {
             'numero': numero,
@@ -93,6 +95,8 @@ def gerar_nfe_xml(numero, destinatario, produtos, transporte, pagamento, info_ad
         'chave_acesso': chave_acesso,
         'data': datetime.now().strftime('%d/%m/%Y %H:%M:%S'),
         'destinatario': destinatario['razao_social'],
+        'emitente': emit.get('razao_social', ''),
+        'ambiente': ambiente,
         'valor': v_nf,
         'xml_path': xml_path,
         'danfe_path': danfe_path,
@@ -219,8 +223,10 @@ def emitir():
 
         pagamento = {'forma': forma_pgto, 'valor': valor_pgto}
         info_adicionais = request.form.get('info_adicionais', '')
+        ambiente = request.form.get('ambiente', '1')
 
-        registro = gerar_nfe_xml(numero, destinatario, produtos, transporte, pagamento, info_adicionais)
+        registro = gerar_nfe_xml(numero, destinatario, produtos, transporte, pagamento,
+                                 info_adicionais, ambiente=ambiente)
         salvar_proximo_numero(numero + 1)
 
         return render_template('resultado.html',
@@ -293,6 +299,8 @@ def importar_csv():
                 nota['transporte'],
                 nota['pagamento'],
                 nota['info_adicionais'],
+                emitente=nota.get('emitente'),
+                ambiente=nota.get('ambiente') or '1',
             )
             resultados.append(registro)
             if nota['numero'] > maior_numero:

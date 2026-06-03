@@ -150,8 +150,35 @@ def parsear_nota(numero, linhas_nota):
 
     info_adicionais = primeira.get('info_adicionais', '')
 
+    ambiente = primeira.get('ambiente', '').strip() or None
+
+    emitente = None
+    if primeira.get('emit_cnpj', '').strip():
+        emitente = {
+            'cnpj': primeira.get('emit_cnpj', '').strip(),
+            'razao_social': primeira.get('emit_razao_social', ''),
+            'nome_fantasia': primeira.get('emit_nome_fantasia', ''),
+            'ie': primeira.get('emit_ie', ''),
+            'crt': primeira.get('emit_crt', '') or '3',
+            'endereco': {
+                'logradouro': primeira.get('emit_logradouro', ''),
+                'numero': primeira.get('emit_numero', ''),
+                'complemento': primeira.get('emit_complemento', ''),
+                'bairro': primeira.get('emit_bairro', ''),
+                'cod_municipio': primeira.get('emit_cod_municipio', ''),
+                'municipio': primeira.get('emit_municipio', ''),
+                'uf': primeira.get('emit_uf', ''),
+                'cep': primeira.get('emit_cep', ''),
+                'cod_pais': primeira.get('emit_cod_pais', '') or '1058',
+                'pais': primeira.get('emit_pais', '') or 'BRASIL',
+                'telefone': primeira.get('emit_telefone', ''),
+            },
+        }
+
     return {
         'numero': _int(numero),
+        'emitente': emitente,
+        'ambiente': ambiente,
         'destinatario': destinatario,
         'produtos': produtos,
         'transporte': transporte,

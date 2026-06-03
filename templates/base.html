@@ -7,14 +7,38 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f8f9fa; }
-        .navbar { background-color: #1a237e !important; }
-        .card-header { background-color: #283593; color: white; }
-        .form-section { background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .form-section h5 { color: #283593; border-bottom: 2px solid #283593; padding-bottom: 8px; margin-bottom: 15px; }
-        .produto-card { border: 1px solid #dee2e6; border-radius: 8px; padding: 15px; margin-bottom: 10px; background: #fafafa; }
-        .btn-primary { background-color: #283593; border-color: #283593; }
-        .btn-primary:hover { background-color: #1a237e; border-color: #1a237e; }
+        :root {
+            --azul: #05A6FF;
+            --azul-escuro: #0488d1;
+            --roxo: #8800F8;
+            --cinza-claro: #F2F2F2;
+            --cinza-medio: #BFBFBF;
+            --branco: #FFFFFF;
+        }
+        body { background-color: var(--cinza-claro); color: #222; }
+        .navbar { background-color: var(--azul) !important; }
+        .navbar-brand, .nav-link { color: var(--branco) !important; }
+        .nav-link:hover { color: var(--cinza-claro) !important; }
+        .card { border: 1px solid var(--cinza-medio); border-radius: 8px; }
+        .card-header { background-color: var(--azul); color: var(--branco); border-bottom: 1px solid var(--cinza-medio); }
+        .form-section { background: var(--branco); border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(5,166,255,0.1); border: 1px solid var(--cinza-medio); }
+        .form-section h5 { color: var(--azul); border-bottom: 2px solid var(--azul); padding-bottom: 8px; margin-bottom: 15px; }
+        .produto-card { border: 1px solid var(--cinza-medio); border-radius: 8px; padding: 15px; margin-bottom: 10px; background: var(--cinza-claro); }
+        .btn-primary { background-color: var(--azul); border-color: var(--azul); color: var(--branco); }
+        .btn-primary:hover, .btn-primary:focus, .btn-primary:active { background-color: var(--azul-escuro) !important; border-color: var(--azul-escuro) !important; color: var(--branco) !important; }
+        .btn-outline-primary { color: var(--azul); border-color: var(--azul); }
+        .btn-outline-primary:hover { background-color: var(--azul); color: var(--branco); }
+        .btn-success { background-color: var(--roxo); border-color: var(--roxo); }
+        .btn-success:hover, .btn-success:focus, .btn-success:active { background-color: #6a00c2 !important; border-color: #6a00c2 !important; }
+        .btn-outline-secondary { color: #555; border-color: var(--cinza-medio); }
+        .btn-outline-secondary:hover { background-color: var(--cinza-medio); color: #222; }
+        .badge.bg-success { background-color: var(--roxo) !important; }
+        .alert-info { background-color: #e6f5ff; color: #024466; border-color: #b5e0fb; }
+        .alert-success { background-color: #f1e6ff; color: #4a0093; border-color: #d5b3fc; }
+        .table-primary > * { background-color: #e6f5ff !important; }
+        a { color: var(--azul); }
+        a:hover { color: var(--roxo); }
+        footer { color: #555; }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -40,13 +64,13 @@
                     </li>
                 </ul>
                 <span class="navbar-text">
-                    <span class="badge bg-warning text-dark">XML SEM ASSINATURA</span>
+                    <span class="badge" style="background-color: var(--roxo); color: var(--branco);">XML SEM ASSINATURA</span>
                 </span>
             </div>
         </div>
     </nav>
 
-    <div class="bg-info bg-opacity-25 text-dark text-center py-2 small">
+    <div class="text-center py-2 small" style="background-color: #e6f5ff; color: #024466; border-bottom: 1px solid var(--cinza-medio);">
         <i class="bi bi-info-circle"></i> Este sistema gera apenas o XML da NFe. A assinatura digital e a transmissao a SEFAZ devem ser feitas no emissor externo.
     </div>
 

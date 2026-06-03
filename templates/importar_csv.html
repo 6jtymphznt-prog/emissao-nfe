@@ -47,11 +47,29 @@
                     <tbody>
                         <tr class="table-primary"><td colspan="4"><strong>IDENTIFICACAO DA NOTA</strong></td></tr>
                         <tr><td><code>numero</code></td><td>Sim</td><td>Numero da NFe</td><td>1</td></tr>
+                        <tr><td><code>ambiente</code></td><td>Nao</td><td>1=Producao (real), 2=Homologacao (teste). Padrao: 1</td><td>1</td></tr>
                         <tr><td><code>natureza_operacao</code></td><td>Nao</td><td>Natureza (padrao: VENDA DE MERCADORIA)</td><td>VENDA DE MERCADORIA</td></tr>
                         <tr><td><code>tipo_operacao</code></td><td>Nao</td><td>0=Entrada, 1=Saida (padrao: 1)</td><td>1</td></tr>
                         <tr><td><code>finalidade</code></td><td>Nao</td><td>1=Normal, 2=Complementar, 3=Ajuste, 4=Devolucao</td><td>1</td></tr>
                         <tr><td><code>consumidor_final</code></td><td>Nao</td><td>0=Nao, 1=Sim</td><td>0</td></tr>
                         <tr><td><code>presenca</code></td><td>Nao</td><td>0=N/A, 1=Presencial, 2=Internet, 9=Outros</td><td>1</td></tr>
+
+                        <tr class="table-primary"><td colspan="4"><strong>EMITENTE (FILIAL - opcional, sobrescreve o .env)</strong></td></tr>
+                        <tr><td colspan="4" class="text-muted small">Use estas colunas para emitir notas de uma filial diferente. Se deixar TODAS em branco, o sistema usa os dados do arquivo .env</td></tr>
+                        <tr><td><code>emit_cnpj</code></td><td>Nao</td><td>CNPJ da filial (14 digitos)</td><td>00000000000299</td></tr>
+                        <tr><td><code>emit_razao_social</code></td><td>Nao</td><td>Razao social da filial</td><td>FILIAL SP LTDA</td></tr>
+                        <tr><td><code>emit_nome_fantasia</code></td><td>Nao</td><td>Nome fantasia</td><td>FILIAL SP</td></tr>
+                        <tr><td><code>emit_ie</code></td><td>Nao</td><td>Inscricao Estadual</td><td>123456789</td></tr>
+                        <tr><td><code>emit_crt</code></td><td>Nao</td><td>1=Simples, 2=Simples excesso, 3=Normal (padrao: 3)</td><td>3</td></tr>
+                        <tr><td><code>emit_logradouro</code></td><td>Nao</td><td>Logradouro da filial</td><td>Rua da Filial</td></tr>
+                        <tr><td><code>emit_numero</code></td><td>Nao</td><td>Numero</td><td>200</td></tr>
+                        <tr><td><code>emit_complemento</code></td><td>Nao</td><td>Complemento</td><td>Sala 1</td></tr>
+                        <tr><td><code>emit_bairro</code></td><td>Nao</td><td>Bairro</td><td>Centro</td></tr>
+                        <tr><td><code>emit_cod_municipio</code></td><td>Nao</td><td>Codigo IBGE do municipio (7 digitos)</td><td>3550308</td></tr>
+                        <tr><td><code>emit_municipio</code></td><td>Nao</td><td>Nome do municipio</td><td>SAO PAULO</td></tr>
+                        <tr><td><code>emit_uf</code></td><td>Nao</td><td>UF da filial</td><td>SP</td></tr>
+                        <tr><td><code>emit_cep</code></td><td>Nao</td><td>CEP</td><td>01001000</td></tr>
+                        <tr><td><code>emit_telefone</code></td><td>Nao</td><td>Telefone</td><td>11999999999</td></tr>
 
                         <tr class="table-primary"><td colspan="4"><strong>DESTINATARIO</strong></td></tr>
                         <tr><td><code>dest_cnpj_cpf</code></td><td>Sim</td><td>CNPJ (14 dig) ou CPF (11 dig), so numeros</td><td>00000000000200</td></tr>
