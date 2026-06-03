@@ -26,13 +26,8 @@ class Config:
     EMIT_PAIS = os.getenv('EMIT_PAIS', 'BRASIL')
     EMIT_TELEFONE = os.getenv('EMIT_TELEFONE', '')
 
-    CERT_PFX_PATH = os.getenv('CERT_PFX_PATH', 'certificados/certificado.pfx')
-    CERT_PFX_PASSWORD = os.getenv('CERT_PFX_PASSWORD', '')
-
-    NFE_AMBIENTE = os.getenv('NFE_AMBIENTE', '1')
     NFE_SERIE = os.getenv('NFE_SERIE', '1')
     NFE_PROXIMO_NUMERO = int(os.getenv('NFE_PROXIMO_NUMERO', '1'))
-    NFE_CUF = os.getenv('NFE_CUF', '35')
 
     XMLS_DIR = os.path.join(os.path.dirname(__file__), 'xmls')
     DANFES_DIR = os.path.join(os.path.dirname(__file__), 'danfes')

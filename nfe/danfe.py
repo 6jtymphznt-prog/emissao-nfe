@@ -113,8 +113,20 @@ class DANFEGenerator:
         elements.append(Spacer(1, 2 * mm))
         elements.append(self._info_adicionais(dados_nfe, page_width))
 
-        doc.build(elements)
+        doc.build(elements, onFirstPage=self._marca_dagua, onLaterPages=self._marca_dagua)
         return filepath
+
+    def _marca_dagua(self, canvas, doc):
+        canvas.saveState()
+        canvas.setFont('Helvetica-Bold', 60)
+        canvas.setFillColorRGB(0.85, 0.85, 0.85, alpha=0.4)
+        canvas.translate(A4[0] / 2, A4[1] / 2)
+        canvas.rotate(45)
+        canvas.drawCentredString(0, 40, 'PREVIA')
+        canvas.setFont('Helvetica-Bold', 24)
+        canvas.drawCentredString(0, -10, 'SEM VALOR FISCAL')
+        canvas.drawCentredString(0, -40, 'XML NAO ASSINADO')
+        canvas.restoreState()
 
     def _gerar_barcode_image(self, chave):
         code128 = barcode.get('code128', chave, writer=ImageWriter())

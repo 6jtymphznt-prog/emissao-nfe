@@ -1,41 +1,23 @@
 {% extends "base.html" %}
-{% block title %}NFe Contingencia - Inicio{% endblock %}
+{% block title %}Inicio - Gerador de XML NFe{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
-    <div class="col-md-3">
+    <div class="col-md-6">
         <div class="card text-center">
             <div class="card-body">
                 <h5 class="card-title"><i class="bi bi-plus-circle"></i></h5>
-                <p class="card-text">Emitir nova NFe</p>
-                <a href="{{ url_for('emitir') }}" class="btn btn-primary">Emitir</a>
+                <p class="card-text">Gerar XML de uma nota pelo formulario</p>
+                <a href="{{ url_for('emitir') }}" class="btn btn-primary">Gerar XML</a>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-6">
         <div class="card text-center">
             <div class="card-body">
                 <h5 class="card-title"><i class="bi bi-file-earmark-spreadsheet"></i></h5>
-                <p class="card-text">Emitir NFe via CSV</p>
+                <p class="card-text">Gerar XMLs em lote via planilha CSV</p>
                 <a href="{{ url_for('importar_csv') }}" class="btn btn-success">Importar CSV</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-center">
-            <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-search"></i></h5>
-                <p class="card-text">Consultar NFe por chave</p>
-                <a href="{{ url_for('consultar') }}" class="btn btn-primary">Consultar</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-center">
-            <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-wifi"></i></h5>
-                <p class="card-text">Verificar status SEFAZ</p>
-                <a href="{{ url_for('status_servico') }}" class="btn btn-primary">Verificar</a>
             </div>
         </div>
     </div>
@@ -44,38 +26,27 @@
 <div class="row mb-4">
     <div class="col-md-6">
         <div class="card">
-            <div class="card-header">
-                <i class="bi bi-building"></i> Dados da Empresa
-            </div>
+            <div class="card-header"><i class="bi bi-building"></i> Dados da Empresa</div>
             <div class="card-body">
                 <p><strong>Razao Social:</strong> {{ config.EMIT_RAZAO_SOCIAL }}</p>
                 <p><strong>CNPJ:</strong> {{ config.EMIT_CNPJ | fmt_cnpj }}</p>
                 <p><strong>IE:</strong> {{ config.EMIT_IE }}</p>
                 <p><strong>UF:</strong> {{ config.EMIT_UF }}</p>
-                <p><strong>Ambiente:</strong>
-                    {% if config.NFE_AMBIENTE == '1' %}
-                        <span class="badge bg-danger">Producao</span>
-                    {% else %}
-                        <span class="badge bg-warning text-dark">Homologacao</span>
-                    {% endif %}
-                </p>
             </div>
         </div>
     </div>
     <div class="col-md-6">
         <div class="card">
-            <div class="card-header">
-                <i class="bi bi-info-circle"></i> Informacoes
-            </div>
+            <div class="card-header"><i class="bi bi-info-circle"></i> Como funciona</div>
             <div class="card-body">
-                <p><strong>Proximo numero:</strong> {{ proximo_numero }}</p>
-                <p><strong>Serie:</strong> {{ config.NFE_SERIE }}</p>
-                <p><strong>Modelo:</strong> 55 (NFe)</p>
+                <ol class="small mb-0">
+                    <li>Preencha os dados da nota (via formulario ou CSV)</li>
+                    <li>O sistema gera o <strong>XML</strong> da NFe (sem assinatura)</li>
+                    <li>Voce baixa o XML e tambem uma <strong>previa do DANFE</strong> em PDF</li>
+                    <li>Importa o XML no emissor externo (que ira assinar e transmitir)</li>
+                </ol>
                 <hr>
-                <p class="text-muted small">
-                    <i class="bi bi-exclamation-triangle"></i>
-                    Sistema de contingencia para uso emergencial quando o emissor principal estiver indisponivel.
-                </p>
+                <p class="small mb-0"><strong>Proximo numero:</strong> {{ proximo_numero }} | <strong>Serie:</strong> {{ config.NFE_SERIE }}</p>
             </div>
         </div>
     </div>
@@ -84,7 +55,7 @@
 {% if ultimas_nfes %}
 <div class="card">
     <div class="card-header">
-        <i class="bi bi-clock-history"></i> Ultimas NFe Emitidas
+        <i class="bi bi-clock-history"></i> Ultimos XMLs Gerados
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -95,7 +66,6 @@
                         <th>Data</th>
                         <th>Destinatario</th>
                         <th>Valor</th>
-                        <th>Status</th>
                         <th>Acoes</th>
                     </tr>
                 </thead>
@@ -107,19 +77,12 @@
                         <td>{{ nfe.destinatario }}</td>
                         <td>R$ {{ nfe.valor | fmt_valor }}</td>
                         <td>
-                            {% if nfe.status == '100' %}
-                                <span class="badge bg-success">Autorizada</span>
-                            {% else %}
-                                <span class="badge bg-danger">{{ nfe.status }} - {{ nfe.motivo }}</span>
-                            {% endif %}
-                        </td>
-                        <td>
                             {% if nfe.chave_acesso %}
-                                <a href="{{ url_for('download_danfe', chave=nfe.chave_acesso) }}" class="btn btn-sm btn-outline-primary" title="DANFE">
-                                    <i class="bi bi-file-pdf"></i>
+                                <a href="{{ url_for('download_xml', chave=nfe.chave_acesso) }}" class="btn btn-sm btn-outline-primary" title="XML">
+                                    <i class="bi bi-file-code"></i> XML
                                 </a>
-                                <a href="{{ url_for('download_xml', chave=nfe.chave_acesso) }}" class="btn btn-sm btn-outline-secondary" title="XML">
-                                    <i class="bi bi-file-code"></i>
+                                <a href="{{ url_for('download_danfe', chave=nfe.chave_acesso) }}" class="btn btn-sm btn-outline-secondary" title="Previa DANFE">
+                                    <i class="bi bi-file-pdf"></i> Previa
                                 </a>
                             {% endif %}
                         </td>

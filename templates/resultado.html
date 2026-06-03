@@ -1,70 +1,13 @@
 {% extends "base.html" %}
-{% block title %}Resultado{% endblock %}
+{% block title %}XML Gerado{% endblock %}
 
 {% block content %}
-<h3 class="mb-4"><i class="bi bi-clipboard-check"></i> {{ titulo }}</h3>
+<h3 class="mb-4"><i class="bi bi-check-circle text-success"></i> {{ titulo }}</h3>
 
-{% if resultado %}
-<div class="card mb-4">
-    <div class="card-header">
-        Resposta da SEFAZ
-    </div>
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-2">
-                <strong>Status (cStat):</strong>
-                <p class="{% if resultado.cStat == '100' or resultado.cStat == '107' %}status-100{% else %}status-err{% endif %}">
-                    {{ resultado.get('cStat', 'N/A') }}
-                </p>
-            </div>
-            <div class="col-md-6">
-                <strong>Motivo:</strong>
-                <p>{{ resultado.get('xMotivo', 'N/A') }}</p>
-            </div>
-            {% if resultado.get('nProt') %}
-            <div class="col-md-4">
-                <strong>Protocolo:</strong>
-                <p>{{ resultado.nProt }}</p>
-            </div>
-            {% endif %}
-        </div>
-
-        {% if resultado.get('dhRecbto') %}
-        <div class="row">
-            <div class="col-md-4">
-                <strong>Data/Hora Recebimento:</strong>
-                <p>{{ resultado.dhRecbto }}</p>
-            </div>
-            {% if resultado.get('chNFe') %}
-            <div class="col-md-8">
-                <strong>Chave de Acesso:</strong>
-                <p class="font-monospace">{{ resultado.chNFe | fmt_chave }}</p>
-            </div>
-            {% endif %}
-        </div>
-        {% endif %}
-
-        {% if resultado.cStat == '100' %}
-        <div class="alert alert-success mt-3">
-            <i class="bi bi-check-circle"></i> NFe autorizada com sucesso!
-        </div>
-        {% elif resultado.cStat == '107' %}
-        <div class="alert alert-success mt-3">
-            <i class="bi bi-check-circle"></i> Servico em operacao!
-        </div>
-        {% elif resultado.cStat == '135' %}
-        <div class="alert alert-success mt-3">
-            <i class="bi bi-check-circle"></i> Evento registrado e vinculado a NF-e!
-        </div>
-        {% else %}
-        <div class="alert alert-danger mt-3">
-            <i class="bi bi-exclamation-triangle"></i>
-            Status {{ resultado.get('cStat', '') }}: {{ resultado.get('xMotivo', 'Verifique os dados e tente novamente.') }}
-        </div>
-        {% endif %}
-    </div>
+<div class="alert alert-success">
+    <i class="bi bi-info-circle"></i>
+    O XML foi gerado <strong>sem assinatura digital</strong>. Importe no seu emissor externo para assinar e transmitir.
 </div>
-{% endif %}
 
 {% if registro %}
 <div class="card mb-4">
@@ -100,15 +43,16 @@
             <div class="col-12">
                 <strong>Chave de Acesso:</strong>
                 <p class="font-monospace fs-6">{{ registro.chave_acesso | fmt_chave }}</p>
+                <small class="text-muted">A chave de acesso e calculada localmente e pode ser regerada pelo emissor externo.</small>
             </div>
         </div>
 
         <div class="d-flex gap-2 mt-3">
-            <a href="{{ url_for('download_danfe', chave=registro.chave_acesso) }}" class="btn btn-outline-primary">
-                <i class="bi bi-file-pdf"></i> Download DANFE
+            <a href="{{ url_for('download_xml', chave=registro.chave_acesso) }}" class="btn btn-primary btn-lg">
+                <i class="bi bi-file-code"></i> Baixar XML
             </a>
-            <a href="{{ url_for('download_xml', chave=registro.chave_acesso) }}" class="btn btn-outline-secondary">
-                <i class="bi bi-file-code"></i> Download XML
+            <a href="{{ url_for('download_danfe', chave=registro.chave_acesso) }}" class="btn btn-outline-secondary btn-lg">
+                <i class="bi bi-file-pdf"></i> Previa do DANFE
             </a>
         </div>
         {% endif %}
@@ -118,7 +62,7 @@
 
 <div class="d-flex gap-2">
     <a href="{{ url_for('index') }}" class="btn btn-secondary">
-        <i class="bi bi-house"></i> Voltar ao Inicio
+        <i class="bi bi-house"></i> Inicio
     </a>
     <a href="{{ url_for('emitir') }}" class="btn btn-primary">
         <i class="bi bi-plus-circle"></i> Nova NFe
